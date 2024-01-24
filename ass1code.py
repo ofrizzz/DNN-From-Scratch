@@ -1,6 +1,9 @@
 import numpy as np
 import scipy.io as sp
 import pandas as pd
+import matplotlib.pyplot as plt
+
+
 def soft_max(x):
     exp_x = np.exp(x - np.max(x))
     softmax_values = exp_x / exp_x.sum(axis=0, keepdims=True)
@@ -50,27 +53,37 @@ def split_into_batches(data, batch_size):
     return [data[i:i + batch_size] for i in range(0, len(data), batch_size)]
 
 
-def SGD_minimizer(grad_F, x0, learning_rate, labeled_data, mini_batch_size, tolerance = 1e-3):
+def SGD_minimizer(grad_F, x0, labeled_data, mini_batch_size, plot=False, learning_rate=0.1, iterations=100, tolerance=1e-3):
     x = x0
     np.random.shuffle(labeled_data)
     mini_batches = split_into_batches(labeled_data, mini_batch_size)
     mini_batch_index = 0
-
-    while True:
+    data = labeld_data[:, :-1]
+    labels = labeld_data[:, -1].reshape(-1, 1)
+    objectives = []
+    for _ in range(iterations):
         current_data = mini_batches[mini_batch_index][:, :-1]
-        current_labels = current_labels = mini_batches[mini_batch_index][:, -1].reshape(-1, 1)
-        grad = grad_F(x, current_data , current_labels) 
-
-        
-        if isinstance(grad_norm, float):
-            print(grad_norm)
+        current_labels = current_labels = mini_batches[mini_batch_index][:, -
+                                                                         1].reshape(-1, 1)
+        grad = grad_F(x, current_data, current_labels)
 
         grad_norm = np.linalg.norm(grad)
         if grad_norm < tolerance:
             break
         x = x - learning_rate * grad
+
+        # Loss function:
+        objectives.append(np.linalg.norm(data @ x - labels))
+
         mini_batch_index = (mini_batch_index + 1) % len(mini_batches)
+    if plot:
+        plt.figure()
+        plt.semilogy()
+        plt.plot([i for i in range(len(objectives))],
+                 objectives)
+        plt.show()
     return x
+
 
 def load_matlab_data_np_arrays(mat_file_path):
     mat_data = sp.loadmat(mat_file_path)
@@ -80,13 +93,15 @@ def load_matlab_data_np_arrays(mat_file_path):
             data_object[var_name] = data
     return data_object
 
+
 def LS_grad(x, data, labels):
     return data.T @ (data @ x - labels)
 
-mat_file_path = 'C:\\Users\\Daniel\\Desktop\\3rd_year\\DL\\assignment1\\DL-Course-Assignments-\\SwissRollData.mat'
+
+# mat_file_path = 'C:\\Users\\Daniel\\Desktop\\3rd_year\\DL\\assignment1\\DL-Course-Assignments-\\SwissRollData.mat'
 
 # Load the MATLAB file
-mat_data = sp.loadmat(mat_file_path)
+# mat_data = sp.loadmat(mat_file_path)
 
 # Print each variable as a NumPy array
 # for var_name, data in mat_data.items():
@@ -104,6 +119,7 @@ iris_df["species"].replace("Iris-setosa", 3, inplace=True)
 labeld_data = iris_df.to_numpy()
 # print(split_into_batches(labeld_data,1))
 
-print(SGD_minimizer(LS_grad, np.ones((4, 1)), 0.0001, labeld_data, len(labeld_data), 0.001))
+print(SGD_minimizer(LS_grad, np.ones((4, 1)), labeld_data, len(
+    labeld_data) // 10, plot=True, learning_rate=0.00072, tolerance=0.001))
 # print("data:", data)
 # print("labels", labels)
