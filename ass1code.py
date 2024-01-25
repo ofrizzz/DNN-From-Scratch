@@ -10,7 +10,8 @@ def soft_max(x):
     return softmax_values
 
 
-# n_labels = [0, 1, 2]
+n_labels = [0, 1, 2]
+
 
 def Loss_sample_v2(W, b, x, y):
     vec = [np.dot(W[:, i], x) + b[i] for i in n_labels]
@@ -58,8 +59,8 @@ def SGD_minimizer(grad_F, x0, labeled_data, mini_batch_size, plot=False, learnin
     np.random.shuffle(labeled_data)
     mini_batches = split_into_batches(labeled_data, mini_batch_size)
     mini_batch_index = 0
-    data = labeld_data[:, :-1]
-    labels = labeld_data[:, -1].reshape(-1, 1)
+    data = labeled_data[:, :-1]
+    labels = labeled_data[:, -1].reshape(-1, 1)
     objectives = []
     for _ in range(iterations):
         current_data = mini_batches[mini_batch_index][:, :-1]
@@ -110,16 +111,72 @@ def LS_grad(x, data, labels):
 #         print(data)
 #         print()  # Adds a newline for better readability
 
+def read_iris_dataset():
+    iris_df = pd.read_csv("IRIS.csv")
+    iris_df["species"].replace("Iris-virginica", 1, inplace=True)
+    iris_df["species"].replace("Iris-versicolor", 2, inplace=True)
+    iris_df["species"].replace("Iris-setosa", 3, inplace=True)
+    labeld_data = iris_df.to_numpy()
+    return labeld_data
 
-iris_df = pd.read_csv("IRIS.csv")
-iris_df["species"].replace("Iris-virginica", 1, inplace=True)
-iris_df["species"].replace("Iris-versicolor", 2, inplace=True)
-iris_df["species"].replace("Iris-setosa", 3, inplace=True)
-# labels = iris_df["species"].to_numpy()
-labeld_data = iris_df.to_numpy()
-# print(split_into_batches(labeld_data,1))
 
-print(SGD_minimizer(LS_grad, np.ones((4, 1)), labeld_data, len(
-    labeld_data) // 10, plot=True, learning_rate=0.00072, tolerance=0.001))
-# print("data:", data)
-# print("labels", labels)
+def minimize_iris_LS():
+    labeld_data = read_iris_dataset()
+    print(SGD_minimizer(LS_grad, np.ones((4, 1)), labeld_data, len(
+        labeld_data) // 10, plot=True, learning_rate=0.00072, tolerance=0.001))
+
+
+class ff_standart_neural_network:
+
+    def __init__(self, activation_function, Loss_function, layers_dimensions: list) -> None:
+        self.activation_function = activation_function
+        self.Loss_function = Loss_function
+        self.classes = layers_dimensions[-1]
+        self.num_of_activation_layers = len(layers_dimensions) - 1
+        self.weights = [np.ones((layers_dimensions[i+1], layers_dimensions[i]))
+                        for i in range(len(layers_dimensions) - 1)]
+        self.biases = [b for b in layers_dimensions[1:]]
+
+    def feed_forward(self, x):
+        X = np.array([])
+        for layer in range(len(self.num_of_activation_layers)):
+            x = self.activation_function(
+                self.weights[layer] @ x + self.biases[layer])
+            X = np.concatenate(X, np.array([x]), axis=1)
+        return X
+
+    def tanh_derivative(x: float):
+        return 1 - (np.tanh(x)) ** 2
+
+    # todo: implement softmax grad
+
+    def soft_max_grad_by_theta(x):
+        pass
+
+    def soft_max_grad_by_x(x):
+        pass
+
+    def Jac_f_by_x(n1, n2, W, z, activation_function_derivative, vec):
+        diag = activation_function_derivative(z)
+        jac = diag[:, np.newaxis] * W
+        return jac.T @ vec
+
+    def Jac_f_by_theta(n1, n2, x, z, activation_function_derivative, vec):
+        grad_theta = np.array([])
+        for i in range(n1):
+            for j in range(n2):
+                row = np.zeros((1, n2))
+                row[i] = activation_function_derivative(z[j]) * x[i]
+                np.concatenate(grad_theta, np.array([np.dot(row, vec)]))
+        for i in range(n2):
+            row = np.zeros((1, n2))
+            row[i] = activation_function_derivative(z[j])
+            np.concatenate(grad_theta, np.array([np.dot(row, vec)]))
+
+        return grad_theta
+
+    def Grad_F_by_Theta(X, loss_function_grad_theta, loss_function_grad_x, activation_function_derivative):
+        grad = np.array([loss_function_grad_theta(X[-1])])
+
+    def back_prop(self, x_train, y_train):
+        pass
