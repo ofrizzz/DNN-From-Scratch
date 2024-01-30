@@ -10,7 +10,7 @@ def soft_max(x):
     return softmax_values
 
 
-n_labels = [0, 1, 2]
+# n_labels = [0, 1, 2]
 
 
 def Loss_sample_v2(W, b, x, y):
@@ -125,6 +125,38 @@ def minimize_iris_LS():
     print(SGD_minimizer(LS_grad, np.ones((4, 1)), labeld_data, len(
         labeld_data) // 10, plot=True, learning_rate=0.00072, tolerance=0.001))
 
+# TODO: Check dimensions for both cases of gradient (by W and by X)
+
+
+def gradient_test(F, grad_F, X_shape, W_shape, C_shape):
+    X = np.random.rand(X_shape)
+    C = np.zeros(C_shape)
+    for i in C_shape[0]:
+        C[i][np.random.randint(0, C_shape[1])] = 1
+    W = np.random.rand(W_shape)
+
+    d = np.random.rand(n)
+    epsilon = 0.5
+    F0 = F(X, W, C)
+    g0 = grad_F(X, W, C)
+    y1 = []
+    y2 = []
+    eps = []
+    for _ in range(10):
+        epsilon = epsilon * 0.5
+        eps.append(epsilon)
+        F1 = F(x + epsilon * d)
+        F2 = F0 + np.dot(d, g0)
+        y1.append(np.abs(F0 - F1))
+        y2.append(np.abs(F0 - F2))
+
+    plt.plot(eps, F1, label="|F(x + e*d) - F(x)|")
+    plt.plot(eps, F2, label="|F(x + e*d) - F(x) - e * d^Tgrad(x)|")
+    plt.title('gradient test')
+    plt.semilogy()
+    plt.legend()
+    plt.show()
+
 
 class ff_standart_neural_network:
 
@@ -152,13 +184,29 @@ class ff_standart_neural_network:
     def tanh_derivative(x: float):
         return 1 - (np.tanh(x)) ** 2
 
+    def soft_max_loss(X, W, C):
+        m = X.shape[1]
+        # C = np.zeros((m, W.shape[1]))
+        # for i in range(len(y)):
+        #     C[i][y[i]] = 1
+        Z = np.exp(X.T @ W)
+        summation = sum([np.exp(X.T @ W[:, i]) for i in range(len(W[0]))])
+        U = np.log(Z / summation[:, None])
+        return - 1 / m * np.sum((C * U), axis=1)
+
     # TODO: implement softmax grad
 
-    def soft_max_grad_by_theta(x):
-        pass
+    def soft_max_grad_by_theta(X, W, C):
+        m = X.shape[1]
+        Z = np.exp(X.T @ W)
+        summation = sum([np.exp(X.T @ W[:, i]) for i in range(len(W[0]))])
+        return 1/m * X @ ((Z / summation[:, None]) - C)
 
-    def soft_max_grad_by_x(x):
-        pass
+    def soft_max_grad_by_x(X, W, C):
+        m = X.shape[1]
+        Z = np.exp(X.T @ W)
+        summation = sum([np.exp(X.T @ W[:, i]) for i in range(len(W[0]))])
+        return 1/m * W @ ((Z / summation[:, None]) - C)
 
     def Jac_f_by_x(W, z, activation_function_derivative, vec):
         diag = activation_function_derivative(z)
@@ -191,9 +239,15 @@ class ff_standart_neural_network:
                 self.weights[i+1].shape[1] - 1, self.weights[i+1].shape[0], X[i+1], z_next, activation_function_derivative, back_prop_grad)
             grad = np.concatenate(grad, grad_theta_i)
 
-    def back_prop(self, x_train, y_train):
-        for x in x_train:
-            X = self.feed_forward(x)
-            grad_F = self.Grad_F_by_Theta(X, soft_max_grad)
-            SGD_minimizer(grad_F, self.weights)
+    def back_prop(self, x_train, y_train):  # TODO
+        # for x in x_train:
+        #     X = self.feed_forward(x)
+        #     grad_F = self.Grad_F_by_Theta(X, soft_max_grad)
+        #     SGD_minimizer(grad_F, self.weights)
         pass
+
+# TODO design flow and then test everything
+
+
+if __name__ == "__main__":
+    gradient_test(soft_max_loss, soft_max_)
