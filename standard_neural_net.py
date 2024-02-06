@@ -61,13 +61,7 @@ class ff_standard_neural_network:
                 # update weights
                 pass
 
-    def Jac_f_by_x_transposed(X, W, V):
-        X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
-        return W.T @ (activation_function_derivative(W @ X) * V)
 
-    def Jac_f_by_theta_transposed(X, W, V):
-        X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
-        return (activation_function_derivative(W @ X) * V) @ X.T
 
     
 
@@ -95,19 +89,12 @@ class ff_standard_neural_network:
         grads_Ws= [grad]
         back_prop_grad = loss_function_grad_x(self.activations[-2], self.weights[-1], C)
 
-        #TODO: make sure which Ws and Xs are used for the loss function gradient
-
-
-        for X, weights in reversed(zip(self.activations[:-1], self.weights)):  # TODO: fix loop condition
-            z = self.weights[i] @ np.concatenate(X, np.array[1])
-            z_next = self.weights[i+1] @ np.concatenate(X[i+1], np.array[1])
-            back_prop_grad = ff_standard_neural_network.J
-            (
-                self.weights, z, activation_function_derivative, back_prop_grad)
-            grad_theta_i = ff_standard_neural_network.Jac_f_by_theta(
-                self.weights[i+1].shape[1] - 1, self.weights[i+1].shape[0], X[i+1], z_next, activation_function_derivative, back_prop_grad)
-            grad = np.concatenate(grad, grad_theta_i)
-
+        for X, weights in reversed(zip(self.activations[:-1], self.weights)):
+            grad = util.Jac_f_by_theta(X, weights, back_prop_grad)
+            grads_Ws.insert(0, grad)
+            back_prop_grad = util.Jac_f_by_x(X, weights, back_prop_grad)
+        
+        return grads_Ws
 
 # Sample test input to initialize ff_standard_neural_network class
 

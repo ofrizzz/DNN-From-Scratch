@@ -12,7 +12,7 @@ def load_matlab_data_np_arrays(mat_file_path):
 
 
 def read_iris_dataset():
-    iris_df = pd.read_csv("IRIS.csv")
+    iris_df = pd.read_csv("datasets//IRIS.csv")
     iris_df["species"].replace("Iris-virginica", 1, inplace=True)
     iris_df["species"].replace("Iris-versicolor", 2, inplace=True)
     iris_df["species"].replace("Iris-setosa", 3, inplace=True)

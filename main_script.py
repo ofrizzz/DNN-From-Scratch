@@ -10,3 +10,4 @@ def minimize_iris_LS():
     print(util.SGD_minimizer(util.LS_grad, np.ones((4, 1)), labeld_data, len(
         labeld_data) // 10, plot=True, learning_rate=0.00072, tolerance=0.001))
 
+minimize_iris_LS()

@@ -55,15 +55,10 @@ def soft_max_loss(X, W, C):
 def soft_max_regression_grad_by_theta(X, W, C):
     m = X.shape[1]
     Z = X.T @ W.T  # Compute logits
-    print(f"Z.shape:{Z.shape}")
-    # softmax = np.exp(
-    #     Z) / (np.sum(np.exp(X.T @ W[j, :]) for j in range(W.shape[0])))[:, None]
     softmax = stable_softmax(Z)
-    print(f"softmax.shape: {softmax.shape}")
-    dL_dZ = (softmax - C) / m
-    grad = X @ dL_dZ
-    print(f"grad.shape: {grad.shape}")
-    return grad
+    dL_dZ = (softmax - C) 
+    grad= (X @ dL_dZ).T
+    return grad / m
 
 # Softmax Gradient with respect to X
 
@@ -71,12 +66,34 @@ def soft_max_regression_grad_by_theta(X, W, C):
 def soft_max_regression_grad_by_x(X, W, C):
     m = X.shape[1]
     Z = X.T @ W.T  # Compute logits
-    # softmax = np.exp(
-    #     Z) / (np.sum(np.exp(X.T @ W[j, :]) for j in range(W.shape[0])))[:, None]
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C) / m
     dL_dX = W.T @ dL_dZ.T
     return dL_dX
+
+activation_function = np.tanh
+output_layer_function = soft_max_loss
+activation_function_derivative = tanh_derivative
+
+def f_standart_layer(X, W):
+    X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
+    print(f"X.shape: {X.shape}")
+    print(f"W.shape: {W.shape}")
+    return activation_function(W @ X)
+
+def Jac_f_by_x(X, W, V):
+    X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
+    Z = activation_function_derivative(W @ X)
+    A = (Z * V)
+    return (W.T @ A).T
+
+def Jac_f_by_theta(X, W, V):
+    X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
+
+
+    Z = activation_function_derivative(W @ X)
+    A = (Z * V)
+    return (A @ X.T).T
 
 
 def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X'):
@@ -118,6 +135,43 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X'):
     plt.legend()
     plt.show()
 
+def JacMv_test(F, JacMv, X_shape, W_shape, by='X'):
+    X_d, X_m = X_shape
+    W_d, W_nlabels = W_shape
+    X = np.random.rand(X_d, X_m)
+    W = np.random.rand(W_d, W_nlabels)
+    if by == 'X':
+        d0 = np.random.rand(X_d, X_m)
+    elif by == 'W':
+        d0 = np.random.rand(W_d, X_m)
+    eps0 = 0.5
+    F0 = F(X, W)
+    g0 = JacMv(X, W, d0)
+    y1 = []
+    y2 = []
+    for i in range(10):
+        epsilon = eps0 ** i
+        d = epsilon * d0
+        if by == 'X':
+            F1 = F(X + d, W)
+        elif by == 'W':
+            F1 = F(X, W + d)
+        F2 = np.dot(d.flatten(), g0.flatten())
+        # F1 - F0
+        # F1 - F0 - eps * d.T Grad(x)
+        y1.append(np.abs(F1 - F0))
+        y2.append(np.abs(F1 - F0 - F2))
+    print(y1)
+    print(y2)
+    xs = np.arange(0, 10)
+    plt.plot(xs, y1, label="first order approximation")
+    plt.plot(xs, y2, label="second order approxination")
+    plt.yscale('log')
+    plt.title('gradient test by: ' + by)
+    plt.legend()
+    plt.show()
+
+
 
 def jac_test(F, Jac_Mv):
     pass
@@ -126,7 +180,8 @@ def jac_test(F, Jac_Mv):
 def SGD_minimizer(grad_F, x0, labeled_data, mini_batch_size, plot=False, learning_rate=0.1, iterations=100, tolerance=1e-3):
     x = x0
     np.random.shuffle(labeled_data)
-    mini_batches = split_into_batches(labeled_data, mini_batch_size)
+
+    mini_batches = split_into_batches(labeled_data[:, :-1], labeled_data[:, -1], mini_batch_size)
     mini_batch_index = 0
     data = labeled_data[:, :-1]
     labels = labeled_data[:, -1].reshape(-1, 1)
@@ -179,5 +234,9 @@ def test_soft_max_loss():
 
 if __name__ == "__main__":
     # test_soft_max_loss()
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
-                  (30, 100), (10, 30), (100, 10), by='W')
+    # gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
+    #             (30, 100), (10, 30), (100, 10), by='X')
+    # gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
+    #               (30, 100), (10, 30), (100, 10), by='W')
+    JacMv_test(f_standart_layer, Jac_f_by_theta,
+                (30, 100), (10, 31), by='W')
