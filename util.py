@@ -50,7 +50,7 @@ def soft_max_loss(X, W, C):
 def soft_max_regression_grad_by_theta(X, W, C):
     m = X.shape[1]
     Z = X.T @ W.T  # Compute logits
-    softmax = np.exp(Z) / (np.sum(np.exp(X.T @ W[j, :] for j in range(W.shape[0]))))[:, None]
+    softmax = np.exp(Z) / (np.sum(np.exp(X.T @ W[j, :]) for j in range(W.shape[0])))[:, None]
     dL_dZ = (softmax - C) / m
     grad = X @ dL_dZ
     return grad
