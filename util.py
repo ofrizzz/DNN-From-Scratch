@@ -35,7 +35,7 @@ def softmax(logits):
     return probabilities
 
 
-def LS_grad(x, data, labels):
+def LS_grad(data, x, labels):
     return data.T @ (data @ x - labels)
 
 
@@ -56,8 +56,8 @@ def soft_max_regression_grad_by_theta(X, W, C):
     m = X.shape[1]
     Z = X.T @ W.T  # Compute logits
     softmax = stable_softmax(Z)
-    dL_dZ = (softmax - C) 
-    grad= (X @ dL_dZ).T
+    dL_dZ = (softmax - C)
+    grad = (X @ dL_dZ).T
     return grad / m
 
 # Softmax Gradient with respect to X
@@ -71,9 +71,11 @@ def soft_max_regression_grad_by_x(X, W, C):
     dL_dX = W.T @ dL_dZ.T
     return dL_dX
 
+
 activation_function = np.tanh
 output_layer_function = soft_max_loss
 activation_function_derivative = tanh_derivative
+
 
 def f_standart_layer(X, W):
     X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
@@ -81,15 +83,16 @@ def f_standart_layer(X, W):
     print(f"W.shape: {W.shape}")
     return activation_function(W @ X)
 
+
 def Jac_f_by_x(X, W, V):
     X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
     Z = activation_function_derivative(W @ X)
     A = (Z * V)
     return (W.T @ A).T
 
+
 def Jac_f_by_theta(X, W, V):
     X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
-
 
     Z = activation_function_derivative(W @ X)
     A = (Z * V)
@@ -135,6 +138,7 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X'):
     plt.legend()
     plt.show()
 
+
 def JacMv_test(F, JacMv, X_shape, W_shape, by='X'):
     X_d, X_m = X_shape
     W_d, W_nlabels = W_shape
@@ -172,40 +176,57 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='X'):
     plt.show()
 
 
-
 def jac_test(F, Jac_Mv):
     pass
 
 
-def SGD_minimizer(grad_F, x0, labeled_data, mini_batch_size, plot=False, learning_rate=0.1, iterations=100, tolerance=1e-3):
-    x = x0
-    np.random.shuffle(labeled_data)
+def LS(data, x, labels):
+    return np.linalg.norm(data @ x - labels)
 
-    mini_batches = split_into_batches(labeled_data[:, :-1], labeled_data[:, -1], mini_batch_size)
+
+def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, mini_batch_size=10, plot=False, learning_rate=0.1, iterations=100, tolerance=1e-3, title="SGD minimzation"):
+    x = x0
+    # shuffle data and labels accordingly
+    assert len(x_train) == len(y_train)
+    p = np.random.permutation(len(x_train))
+    x_train = x_train[p]
+    y_train = y_train[p]
+
+    x_batches, y_batches = split_into_batches(
+        x_train, y_train, mini_batch_size)
     mini_batch_index = 0
-    data = labeled_data[:, :-1]
-    labels = labeled_data[:, -1].reshape(-1, 1)
-    objectives = []
+    loss_log = []
+    grad_norms_log = []
     for _ in range(iterations):
-        current_data = mini_batches[mini_batch_index][:, :-1]
-        current_labels = current_labels = mini_batches[mini_batch_index][:, -
-                                                                         1].reshape(-1, 1)
-        grad = grad_F(x, current_data, current_labels)
+        current_data = x_batches[mini_batch_index]
+        current_labels = y_batches[mini_batch_index].reshape(-1, 1)
+        grad = loss_grad(current_data, x, current_labels)
 
         grad_norm = np.linalg.norm(grad)
         if grad_norm < tolerance:
             break
         x = x - learning_rate * grad
 
-        # Loss function:
-        objectives.append(np.linalg.norm(data @ x - labels))
-
-        mini_batch_index = (mini_batch_index + 1) % len(mini_batches)
+        loss_log.append(loss(x_train, x, y_train))
+        grad_norms_log.append(grad_norm)
+        mini_batch_index = (mini_batch_index + 1) % len(x_batches)
     if plot:
         plt.figure()
-        plt.semilogy()
-        plt.plot([i for i in range(len(objectives))],
-                 objectives)
+        plt.yscale('log')
+        plt.plot([i for i in range(len(loss_log))],
+                 loss_log)
+        plt.xlabel("iterations")
+        plt.ylabel("loss function values")
+        plt.title(title)
+        plt.show()
+
+        plt.figure()
+        plt.yscale('log')
+        plt.plot([i for i in range(len(grad_norms_log))],
+                 grad_norms_log)
+        plt.xlabel("iterations")
+        plt.ylabel("gradient norm values")
+        plt.title(title)
         plt.show()
     return x
 
@@ -239,4 +260,4 @@ if __name__ == "__main__":
     # gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
     #               (30, 100), (10, 30), (100, 10), by='W')
     JacMv_test(f_standart_layer, Jac_f_by_theta,
-                (30, 100), (10, 31), by='W')
+               (30, 100), (10, 31), by='W')

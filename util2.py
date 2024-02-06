@@ -4,19 +4,24 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import util
 
+
 def relu_derivative(z):
     return np.where(z > 0, 1, 0)
 
+
 def tanh_derivative(z):
     return 1 - np.tanh(z)**2
+
 
 def stable_softmax(Z):
     exp_shifted = np.exp(Z - np.max(Z, axis=1, keepdims=True))
     return exp_shifted / np.sum(exp_shifted, axis=1, keepdims=True)
 
+
 def cross_entropy_loss(F, C):
     log_F = np.log(F)
     return -np.mean(np.sum(C * log_F, axis=1))
+
 
 def cross_entropy_grad(F, C):
     m = F.shape[1]
@@ -54,6 +59,3 @@ def SGD_minimizer(grad_F, x0, labeled_data, mini_batch_size, plot=False, learnin
                  objectives)
         plt.show()
     return x
-
-
-
