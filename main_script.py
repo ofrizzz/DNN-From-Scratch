@@ -16,18 +16,18 @@ def minimize_iris_LS():
 
 def minimize_softmax_regression():
     x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
-        "datasets\\GMMData.mat")
+        "datasets\\SwissRollData.mat")
     m = x_train.shape[0]
     l = c_train.shape[0]
     print(SGD_minimizer(util.soft_max_loss, util.soft_max_regression_grad_by_theta, np.random.rand(l, m), x_train,
-          c_train, epochs=40,  plot=True, learning_rate=0.00001, title="soft-max SGD minimiztion for W (Peaks dataset)"))
+          c_train, epochs=40, mini_batch_size=200,  plot=True, learning_rate=0.7, title="soft-max SGD minimiztion for W (Peaks dataset)"))
 
 
 def compute_success_precent(W):
     x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
-        "datasets\\GMMData.mat")
-    train_subsample_size = len(x_train[0]) // 5
-    test_subsample_size = len(x_test[0]) // 5
+        "datasets\\SwissRollData.mat")
+    train_subsample_size = len(x_train[0]) // 2
+    test_subsample_size = len(x_test[0]) // 2
     train_indices = np.random.choice(
         len(x_train[0]), size=train_subsample_size, replace=False)
     test_indices = np.random.choice(
@@ -38,8 +38,8 @@ def compute_success_precent(W):
     sub_c_test = c_test[:, test_indices]
     Z_train = W @ sub_x_train
     Z_test = W @ sub_x_test
-    logits_train = util.stable_softmax(Z_train)
-    logits_test = util.stable_softmax(Z_test)
+    logits_train = util.softmax(Z_train)
+    logits_test = util.softmax(Z_test)
     pred_train = np.argmax(logits_train, axis=0)
     pred_test = np.argmax(logits_test, axis=0)
     correct_predictions_train = np.sum(
@@ -111,21 +111,21 @@ def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, epochs=10,  mini_batch_
 
 
 if __name__ == "__main__":
-    # minimize_softmax_regression()
-    train_success_rates = []
-    test_success_rates = []
-    for i in range(10):
-        W = np.random.rand(5, 5)
-        succ_train, succ_test = compute_success_precent(W)
-        succ_rate_train, succ_rate_test = compute_success_precent(W)
-        train_success_rates.append(succ_rate_train)
-        test_success_rates.append(succ_rate_test)
-    xs = np.arange(10)
-    plt.figure()
-    plt.plot(xs, train_success_rates, label="train success rate")
-    plt.plot(xs, test_success_rates, label="test success rate")
-    plt.xlabel("epochs")
-    plt.ylabel("success rate")
-    plt.title("success rates for subsample of train/test sets")
-    plt.legend()
-    plt.show()
+    minimize_softmax_regression()
+    # train_success_rates = []
+    # test_success_rates = []
+    # for i in range(10):
+    #     W = np.random.rand(5, 5)
+    #     succ_train, succ_test = compute_success_precent(W)
+    #     succ_rate_train, succ_rate_test = compute_success_precent(W)
+    #     train_success_rates.append(succ_rate_train)
+    #     test_success_rates.append(succ_rate_test)
+    # xs = np.arange(10)
+    # plt.figure()
+    # plt.plot(xs, train_success_rates, label="train success rate")
+    # plt.plot(xs, test_success_rates, label="test success rate")
+    # plt.xlabel("epochs")
+    # plt.ylabel("success rate")
+    # plt.title("success rates for subsample of train/test sets")
+    # plt.legend()
+    # plt.show()
