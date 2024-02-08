@@ -24,6 +24,14 @@ def split_into_batches(x_train, y_train, batch_size):
     return x_batches, y_batches
 
 
+def split_into_batches_T(x_train, y_train, batch_size):
+    x_batches = [x_train[:, i:i + batch_size]
+                 for i in range(0, len(x_train), batch_size)]
+    y_batches = [y_train[:, i:i + batch_size]
+                 for i in range(0, len(y_train), batch_size)]
+    return x_batches, y_batches
+
+
 def softmax(logits):
     max_logit = np.max(logits)
     shifted_logits = logits - max_logit
