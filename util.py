@@ -119,10 +119,11 @@ def f_standart_layer(X, W):
 
 
 def JacMV_f_by_x_transpose(X, W, V):
-    # X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
-    Z = activation_function_derivative(W @ X)
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    Z = activation_function_derivative(W @ X_with_ones)
     A = (Z * V)
-    return W.T @ A
+    return (W[:, :-1]).T @ A
 
 
 def JacMV_f_by_theta_transpose(x, W, v):
@@ -131,11 +132,9 @@ def JacMV_f_by_theta_transpose(x, W, v):
     print("v.shape ", v.shape)
     ones_row = np.ones((1, x.shape[1]))
     x_with_ones = np.vstack((x, ones_row))
-    A = (np.diag(activation_function_derivative(W @ x_with_ones)) @ v)
-    kron = np.kron(x.T, np.eye(W.shape[0]))
+    A = (activation_function_derivative(W @ x_with_ones) * v)
     print("A.shape: ", A.shape)
-    print("kron.shape ", kron.shape)
-    return kron.T @ A
+    return A @ x.T
 
 
 def JacMV_f_by_x(x, W, v):
@@ -320,11 +319,11 @@ def test_soft_max_loss():
 
 if __name__ == "__main__":
     # test_soft_max_loss()
-    # gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
-    #             (30, 100), (10, 30), (100, 10), by='X')
-    # gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
-    #               (30, 100), (10, 30), (100, 10), by='W')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
+                  (30, 100), (10, 31), (100, 10), by='X')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
+                  (30, 100), (10, 31), (100, 10), by='W')
     # JacMv_test(f_standart_layer, JacMV_f_by_x,
     #            (30, 100), (10, 30), by='X')
-    print(JacTMV_by_x_test(30, (10, 30), 10, 30))
-    print(JacTMV_by_W_test(30, (10, 30), 10, 300))
+    # print(JacTMV_by_x_test(30, (10, 31), 10, 30))
+    # print(JacTMV_by_W_test(30, (10, 31), 10, 300))

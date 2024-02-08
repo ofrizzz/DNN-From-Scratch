@@ -155,3 +155,4 @@ if __name__ == "__main__":
         print(f"Layer {i+1} activations:\n{activation}\n")
 
     print(network.Grad_F_by_Theta(C))
+    print(network.weights)
