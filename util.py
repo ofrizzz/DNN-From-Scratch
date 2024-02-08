@@ -61,8 +61,9 @@ def stable_softmax(Z):
 def soft_max_loss(X, W, C):
     print("X: ", X)
     print("W: ", W)
-
-    logits = W @ X
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    logits = W @ X_with_ones
     print("Z: ", logits)
     softmax_probs = stable_softmax(logits)
     print("softmax(Z): ", softmax_probs)
@@ -174,9 +175,10 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X'):
         d = epsilon * d0
         if by == 'X':
             F1 = F(X + d, W, C)
+            F2 = np.dot(d.flatten(), g0.flatten())
         elif by == 'W':
             F1 = F(X, W + d, C)
-        F2 = np.dot(d.flatten(), g0.flatten())
+            F2 = np.dot((d[:, :-1]).flatten(), g0.flatten())
         # F1 - F0
         # F1 - F0 - eps * d.T Grad(x)
         y1.append(np.abs(F1 - F0))
@@ -320,9 +322,9 @@ def test_soft_max_loss():
 if __name__ == "__main__":
     # test_soft_max_loss()
     gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
-                  (30, 100), (10, 31), (100, 10), by='X')
+                  (30, 100), (10, 31), (10, 100), by='X')
     gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
-                  (30, 100), (10, 31), (100, 10), by='W')
+                  (30, 100), (10, 31), (10, 100), by='W')
     # JacMv_test(f_standart_layer, JacMV_f_by_x,
     #            (30, 100), (10, 30), by='X')
     # print(JacTMV_by_x_test(30, (10, 31), 10, 30))

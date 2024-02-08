@@ -33,10 +33,10 @@ class ff_standard_neural_network:
         # concatenate 1 at the bottom of x for bias
         for layer in range(self.num_of_layers - 1):
             ones_row = np.ones((1, X.shape[1]))
-            X = np.vstack((X, ones_row))
+            X_with_ones = np.vstack((X, ones_row))
             # X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
             if layer < self.num_of_layers - 2:
-                X = Ws[layer] @ X
+                X = Ws[layer] @ X_with_ones
                 X = activation_function(X)
             else:
                 X = output_layer_function(X, Ws[-1], C)
