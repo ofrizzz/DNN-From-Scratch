@@ -17,24 +17,28 @@ def minimize_iris_LS():
 def minimize_softmax_regression():
     x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
         "datasets\\SwissRollData.mat")
-    m = x_train.shape[0]
+    d = x_train.shape[0]
     l = c_train.shape[0]
-    print(SGD_minimizer(util.soft_max_loss, util.soft_max_regression_grad_by_theta, np.random.rand(l, m), x_train,
-          c_train, epochs=40, mini_batch_size=200,  plot=True, learning_rate=0.7, title="soft-max SGD minimiztion for W (Peaks dataset)"))
+    print(SGD_minimizer(util.soft_max_loss, util.soft_max_regression_grad_by_theta, np.random.rand(l, d+1), x_train,
+          c_train, epochs=30, mini_batch_size=200,  plot=True, learning_rate=0.3, title="soft-max SGD minimiztion for W (SwissRollData)"))
 
 
 def compute_success_precent(W):
     x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
         "datasets\\SwissRollData.mat")
-    train_subsample_size = len(x_train[0]) // 2
-    test_subsample_size = len(x_test[0]) // 2
+    train_ones_row = np.ones((1, x_train.shape[1]))
+    x_train_with_ones = np.vstack((x_train, train_ones_row))
+    test_ones_row = np.ones((1, x_test.shape[1]))
+    x_test_with_ones = np.vstack((x_test, test_ones_row))
+    train_subsample_size = len(x_train[0]) // 5
+    test_subsample_size = len(x_test[0]) // 5
     train_indices = np.random.choice(
         len(x_train[0]), size=train_subsample_size, replace=False)
     test_indices = np.random.choice(
         len(x_test[0]), size=test_subsample_size, replace=False)
-    sub_x_train = x_train[:, train_indices]
+    sub_x_train = x_train_with_ones[:, train_indices]
     sub_c_train = c_train[:, train_indices]
-    sub_x_test = x_test[:, test_indices]
+    sub_x_test = x_test_with_ones[:, test_indices]
     sub_c_test = c_test[:, test_indices]
     Z_train = W @ sub_x_train
     Z_test = W @ sub_x_test
@@ -53,6 +57,8 @@ def compute_success_precent(W):
 
 def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, epochs=10,  mini_batch_size=10, plot=False, learning_rate=0.1, tolerance=1e-3, title="SGD minimzation"):
     W = x0
+    # ones_row = np.ones((1, x_train.shape[1]))
+    # x_train = np.vstack((x_train, ones_row))
     # shuffle data and labels accordingly
     assert len(x_train[0]) == len(y_train[0])
     p = np.random.permutation(len(x_train[0]))
@@ -68,7 +74,8 @@ def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, epochs=10,  mini_batch_
     for _ in range(epochs):
 
         for current_data, current_labels in zip(x_batches, y_batches):
-            grad = loss_grad(current_data, W, current_labels.T)
+
+            grad = loss_grad(current_data, W, current_labels)
 
             grad_norm = np.linalg.norm(grad)
             if grad_norm < tolerance:
@@ -77,7 +84,7 @@ def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, epochs=10,  mini_batch_
         succ_rate_train, succ_rate_test = compute_success_precent(W)
         train_success_rates.append(succ_rate_train)
         test_success_rates.append(succ_rate_test)
-        loss_log.append(loss(x_train, W, y_train.T))
+        loss_log.append(loss(x_train, W, y_train))
         grad_norms_log.append(grad_norm)
 
     if plot:

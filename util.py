@@ -62,11 +62,8 @@ def soft_max_loss(X, W, C):
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
     logits = (W @ X_with_ones).T
-    print("Z: ", logits)
     softmax_probs = stable_softmax(logits)
-    print("softmax(Z): ", softmax_probs)
     log_probs = np.log(softmax_probs)
-    print("log(softmax(Z)): ", log_probs)
     return -np.mean(np.sum(C.T * log_probs, axis=1))
 
 
@@ -91,20 +88,10 @@ def soft_max_regression_grad_by_theta(X, W, C):
     dL_dZ = (softmax - C.T)
     grad = (X @ dL_dZ).T
     grad = grad / m
-    grad_by_b = soft_max_regression_grad_by_b(X, W, C)
+    grad_by_b = np.sum(dL_dZ.T, axis=1) / m
     grad_by_theta = np.hstack((grad, grad_by_b.reshape((-1, 1))))
     return grad_by_theta
 
-
-def soft_max_regression_grad_by_b(X, W, C):
-    m = X.shape[1]
-    ones_row = np.ones((1, X.shape[1]))
-    X_with_ones = np.vstack((X, ones_row))
-    Z = X_with_ones.T @ W.T  # Compute logits
-    softmax = stable_softmax(Z)
-    dL_dZ = (softmax - C.T).T
-    grad = np.sum(dL_dZ, axis=1)
-    return grad / m
 
 # def soft_max_regression_grad_by_theta(X, W, C):
 #     m = X.shape[1]
@@ -144,14 +131,12 @@ def JacMV_f_by_x_transpose(X, W, V):
 
 
 def JacMV_f_by_theta_transpose(x, W, v):
-    print("x.shape ", x.shape)
-    print("W.shape ", W.shape)
-    print("v.shape ", v.shape)
     ones_row = np.ones((1, x.shape[1]))
     x_with_ones = np.vstack((x, ones_row))
     A = (activation_function_derivative(W @ x_with_ones) * v)
-    print("A.shape: ", A.shape)
-    return A @ x.T
+    jacmv_by_W = A @ x.T
+    jacmv_by_b = np.sum(A, axis=1)
+    return np.hstack((jacmv_by_W, jacmv_by_b.reshape(-1, 1)))
 
 
 def JacMV_f_by_x(x, W, v):
@@ -198,8 +183,6 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X', iter=20):
         # F1 - F0 - eps * d.T Grad(x)
         y1.append(np.abs(F1 - F0))
         y2.append(np.abs(F1 - F0 - F2))
-    print(y1)
-    print(y2)
     xs = np.arange(0, iter)
     plt.plot(xs, y1, label="first order approximation")
     plt.plot(xs, y2, label="second order approxination")
