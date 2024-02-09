@@ -84,10 +84,23 @@ activation_function_derivative = tanh_derivative
 # Softmax Gradient with respect to W (Theta)
 def soft_max_regression_grad_by_theta(X, W, C):
     m = X.shape[1]
-    Z = X.T @ (W[:, :-1]).T  # Compute logits
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    Z = X_with_ones.T @ W.T  # Compute logits
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C.T)
     grad = (X @ dL_dZ).T
+    return grad / m
+
+
+def soft_max_regression_grad_by_b(X, W, C):
+    m = X.shape[1]
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    Z = X_with_ones.T @ W.T  # Compute logits
+    softmax = stable_softmax(Z)
+    dL_dZ = (softmax - C.T).T
+    grad = np.sum(dL_dZ, axis=1)
     return grad / m
 
 # def soft_max_regression_grad_by_theta(X, W, C):
@@ -103,7 +116,9 @@ def soft_max_regression_grad_by_theta(X, W, C):
 
 def soft_max_regression_grad_by_x(X, W, C):
     m = X.shape[1]
-    Z = X.T @ (W[:, :-1]).T  # Compute logits
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    Z = X_with_ones.T @ W.T  # Compute logits
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C.T) / m
     dL_dX = (W[:, :-1]).T @ dL_dZ.T
