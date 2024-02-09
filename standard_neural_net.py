@@ -95,8 +95,8 @@ class ff_standard_neural_network:
         X_d = self.input_dimension
         X = np.random.rand(X_d)
         C = np.zeros(C_shape)
-        for i in range(C_shape[0]):
-            C[i][np.random.randint(0, C_shape[1])] = 1
+        for i in range(C_shape[1]):
+            C[np.random.randint(0, C_shape[0])][i] = 1
         d0 = [np.random.rand(W.shape[0], W.shape[0]) for W in self.weights]
         eps0 = 0.5
         F0 = self.feed_forward(X, C)
@@ -154,5 +154,5 @@ if __name__ == "__main__":
     for i, activation in enumerate(activations):
         print(f"Layer {i+1} activations:\n{activation}\n")
 
-    print(network.Grad_F_by_Theta(C))
-    print(network.weights)
+    print([w.shape for w in network.Grad_F_by_Theta(C)])
+    print([w.shape for w in network.weights])

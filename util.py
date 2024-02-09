@@ -61,13 +61,13 @@ def stable_softmax(Z):
 def soft_max_loss(X, W, C):
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    logits = W @ X_with_ones
+    logits = (W @ X_with_ones).T
     print("Z: ", logits)
     softmax_probs = stable_softmax(logits)
     print("softmax(Z): ", softmax_probs)
     log_probs = np.log(softmax_probs)
     print("log(softmax(Z)): ", log_probs)
-    return -np.mean(np.sum(C * log_probs, axis=1))
+    return -np.mean(np.sum(C.T * log_probs, axis=1))
 
 
 activation_function = np.tanh
@@ -90,7 +90,10 @@ def soft_max_regression_grad_by_theta(X, W, C):
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C.T)
     grad = (X @ dL_dZ).T
-    return grad / m
+    grad = grad / m
+    grad_by_b = soft_max_regression_grad_by_b(X, W, C)
+    grad_by_theta = np.hstack((grad, grad_by_b.reshape((-1, 1))))
+    return grad_by_theta
 
 
 def soft_max_regression_grad_by_b(X, W, C):
@@ -166,13 +169,13 @@ def JacMV_f_by_W(x, W, v):
 #     return np.outer(A, X)
 
 
-def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X'):
+def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X', iter=20):
     X_d, X_m = X_shape
     W_d, W_nlabels = W_shape
     X = np.random.rand(X_d, X_m)
     C = np.zeros(C_shape)
-    for i in range(C_shape[0]):
-        C[i][np.random.randint(0, C_shape[1])] = 1
+    for i in range(C_shape[1]):
+        C[np.random.randint(0, C_shape[0])][i] = 1
     W = np.random.rand(W_d, W_nlabels)
     if by == 'X':
         d0 = np.random.rand(X_d, X_m)
@@ -183,22 +186,21 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X'):
     g0 = grad_F(X, W, C)
     y1 = []
     y2 = []
-    for i in range(10):
+    for i in range(iter):
         epsilon = eps0 ** i
         d = epsilon * d0
         if by == 'X':
             F1 = F(X + d, W, C)
-            F2 = np.dot(d.flatten(), g0.flatten())
         elif by == 'W':
             F1 = F(X, W + d, C)
-            F2 = np.dot((d[:, :-1]).flatten(), g0.flatten())
+        F2 = np.dot(d.flatten(), g0.flatten())
         # F1 - F0
         # F1 - F0 - eps * d.T Grad(x)
         y1.append(np.abs(F1 - F0))
         y2.append(np.abs(F1 - F0 - F2))
     print(y1)
     print(y2)
-    xs = np.arange(0, 10)
+    xs = np.arange(0, iter)
     plt.plot(xs, y1, label="first order approximation")
     plt.plot(xs, y2, label="second order approxination")
     plt.yscale('log')
