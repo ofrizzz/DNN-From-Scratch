@@ -59,8 +59,6 @@ def stable_softmax(Z):
 
 
 def soft_max_loss(X, W, C):
-    print("X: ", X)
-    print("W: ", W)
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
     logits = W @ X_with_ones

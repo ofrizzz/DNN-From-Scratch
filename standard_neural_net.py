@@ -77,8 +77,8 @@ class ff_standard_neural_network:
     #     return grad_theta
 
     def Grad_F_by_Theta(self, C):
-        grad = np.array([loss_function_grad_theta(
-            self.activations[-2], self.weights[-1], C)])
+        grad = np.array(loss_function_grad_theta(
+            self.activations[-2], self.weights[-1], C))
         grads_Ws = [grad]
         back_prop_grad = loss_function_grad_x(
             self.activations[-2], self.weights[-1], C)
