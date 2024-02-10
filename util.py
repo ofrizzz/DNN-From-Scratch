@@ -83,7 +83,7 @@ def soft_max_regression_grad_by_theta(X, W, C):
     m = X.shape[1]
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    Z = X_with_ones.T @ W.T  # Compute logits
+    Z = X_with_ones.T @ W.T
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C.T)
     grad = (X @ dL_dZ).T
@@ -108,7 +108,7 @@ def soft_max_regression_grad_by_x(X, W, C):
     m = X.shape[1]
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    Z = X_with_ones.T @ W.T  # Compute logits
+    Z = X_with_ones.T @ W.T
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C.T) / m
     dL_dX = (W[:, :-1]).T @ dL_dZ.T
@@ -116,10 +116,10 @@ def soft_max_regression_grad_by_x(X, W, C):
 
 
 def f_standart_layer(X, W):
-    # X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
-    # print(f"X.shape: {X.shape}")
-    # print(f"W.shape: {W.shape}")
-    return activation_function(W @ X)
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    # X_with_ones = np.append(X, 1)
+    return activation_function(W @ X_with_ones)
 
 
 def JacMV_f_by_x_transpose(X, W, V):
@@ -140,11 +140,19 @@ def JacMV_f_by_theta_transpose(x, W, v):
 
 
 def JacMV_f_by_x(x, W, v):
-    return np.diag(activation_function_derivative(W@x)) @ (W @ v)
+    ones_row = np.ones((1, x.shape[1]))
+    x_with_ones = np.vstack((x, ones_row))
+    # x_with_ones = np.append(x, 1)
+    return np.diag(activation_function_derivative(W@x_with_ones.flatten())) @ (W[:, :-1] @ v)
 
 
 def JacMV_f_by_W(x, W, v):
-    return np.diag(activation_function_derivative(W @ x)) @ (np.kron(x.T, np.eye(W.shape[0])) @ v)
+    ones_row = np.ones((1, x.shape[1]))
+    x_with_ones = np.vstack((x, ones_row))
+    jac_by_b = np.diag(activation_function_derivative(W @ x_with_ones))
+    jac_by_W = jac_by_b @ np.kron(x.T, np.eye(W.shape[0]))
+    jac_by_theta = np.hstack((jac_by_W, jac_by_b))
+    return jac_by_theta @ v
 
 
 # def JacMV_f_by_theta_transpose(X, W, V):
@@ -194,16 +202,15 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X', iter=20):
     plt.show()
 
 
-def JacMv_test(F, JacMv, X_shape, W_shape, by='W'):
-    iterations = 20
+def JacMv_test(F, JacMv, X_shape, W_shape, by='W', iterations=10):
     X_d, X_m = X_shape
-    W_d, W_nlabels = W_shape
-    X = np.random.rand(X_d)
-    W = np.random.rand(W_d, W_nlabels)
+    W_nlabels, W_d = W_shape
+    X = np.random.rand(X_d, X_m)
+    W = np.random.rand(W_nlabels, W_d)
     if by == 'X':
-        d0 = np.random.rand(X_d)
+        d0 = np.random.rand(X_d, X_m)
     elif by == 'W':
-        d0 = np.random.rand(W_d, W_nlabels)
+        d0 = np.random.rand(W_nlabels, W_d)
     eps0 = 0.5
     F0 = F(X, W)
     y1 = []
@@ -232,10 +239,10 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='W'):
     plt.show()
 
 
-def JacTMV_by_x_test(x_d, W_shape, u_d, v_d):
-    x = np.random.rand(x_d)
+def JacTMV_by_x_test(x_shape, W_shape, u_d, v_d):
+    x = np.random.rand(x_shape[0], x_shape[1])
     W = np.random.rand(W_shape[0], W_shape[1])
-    u = np.random.rand(u_d)
+    u = np.random.rand(u_d, 1)
     v = np.random.rand(v_d)
     return abs(u.T @ JacMV_f_by_x(x, W, v) - v.T @ JacMV_f_by_x_transpose(x, W, u)) < MACHINE_EPS_FL32
 
@@ -319,11 +326,11 @@ def test_soft_max_loss():
 
 if __name__ == "__main__":
     # test_soft_max_loss()
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
-                  (30, 100), (10, 31), (10, 100), by='X')
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
-                  (30, 100), (10, 31), (10, 100), by='W')
+    # gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
+    #               (30, 100), (10, 31), (10, 100), by='X')
+    # gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
+    #               (30, 100), (10, 31), (10, 100), by='W')
     # JacMv_test(f_standart_layer, JacMV_f_by_x,
-    #            (30, 100), (10, 30), by='X')
-    # print(JacTMV_by_x_test(30, (10, 31), 10, 30))
+    #            (10, 1), (5, 11), by='X')
+    print(JacTMV_by_x_test((30, 1), (10, 31), 10, 30))
     # print(JacTMV_by_W_test(30, (10, 31), 10, 300))
