@@ -91,36 +91,36 @@ class ff_standard_neural_network:
 
         return grads_Ws
 
-    def gradient_test_nn(self, C_shape):
+    def gradient_test_nn(self, m, iterations=20):
         X_d = self.input_dimension
-        X = np.random.rand(X_d)
+        C_shape = (X_d, m)
+        X = np.random.rand(X_d, m)
         C = np.zeros(C_shape)
         for i in range(C_shape[1]):
             C[np.random.randint(0, C_shape[0])][i] = 1
-        d0 = [np.random.rand(W.shape[0], W.shape[0]) for W in self.weights]
+        d0 = [np.random.rand(W.shape[0], W.shape[1]) for W in self.weights]
         eps0 = 0.5
         F0 = self.feed_forward(X, C)
         g0 = self.Grad_F_by_Theta(C)
         y1 = []
         y2 = []
-        for i in range(10):
+        for i in range(iterations):
             epsilon = eps0 ** i
             d = [epsilon * W_i for W_i in d0]
             W_plus_d = [self.weights[i] + d[i]
                         for i in range(len(self.weights))]
             F1 = self.feed_forward(X, Ws=W_plus_d, C=C)
-            F2 = np.dot(d.flatten(), g0.flatten())
+            F2 = np.sum([np.dot((d[j]).flatten(), (g0[j]).flatten())
+                         for j in range(len(d))])
             y1.append(np.abs(F1 - F0))
             y2.append(np.abs(F1 - F0 - F2))
-        print(y1)
-        print(y2)
-        xs = np.arange(0, 10)
+        xs = np.arange(iterations)
         plt.plot(xs, y1, label="first order approximation")
         plt.plot(xs, y2, label="second order approxination")
         plt.yscale('log')
         plt.xlabel('iterations')
         plt.ylabel('approximation')
-        plt.title('gradient test by: ')
+        plt.title('Full Neural Net Gradient Test')
         plt.legend()
         plt.show()
 
@@ -128,31 +128,33 @@ class ff_standard_neural_network:
 
 
 if __name__ == "__main__":
-    input_dimension = 5  # For example, a neural network with 5 input features
-    # Two hidden layers, first with 4 neurons and second with 3 neurons
-    hidden_layers_dimensions = [4, 3]
-    # Assuming a binary classification task, so 2 output neurons
-    output_layer_dimension = 2
+    # input_dimension = 5  # For example, a neural network with 5 input features
+    # # Two hidden layers, first with 4 neurons and second with 3 neurons
+    # hidden_layers_dimensions = [4, 3]
+    # # Assuming a binary classification task, so 2 output neurons
+    # output_layer_dimension = 2
 
-    # Initialize the ff_standard_neural_network instance
-    network = ff_standard_neural_network(
-        input_dimension, hidden_layers_dimensions, output_layer_dimension)
-    # print([network.weights[i].shape for i in range(len(network.weights))])
+    # # Initialize the ff_standard_neural_network instance
+    # network = ff_standard_neural_network(
+    #     input_dimension, hidden_layers_dimensions, output_layer_dimension)
+    # # print([network.weights[i].shape for i in range(len(network.weights))])
 
-    network = ff_standard_neural_network(3, [2], 3)
+    # network = ff_standard_neural_network(3, [2], 3)
 
-    # Test input: batch of 2 vectors, each with 3 features
-    input_batch = np.array([[0.5, -0.5],  [0.3, 0.5], [-0.5,  0.3]])
-    print(input_batch.shape)
-    C = np.zeros((3, 2))
-    for i in range(C.shape[0]):
-        C[i][np.random.randint(0, C.shape[1])] = 1
-    # Execute feed_forward
-    print("loss for x: ", network.feed_forward(input_batch, C))
-    activations = network.activations
-    # Display the output
-    for i, activation in enumerate(activations):
-        print(f"Layer {i+1} activations:\n{activation}\n")
+    # # Test input: batch of 2 vectors, each with 3 features
+    # input_batch = np.array([[0.5, -0.5],  [0.3, 0.5], [-0.5,  0.3]])
+    # print(input_batch.shape)
+    # C = np.zeros((3, 2))
+    # for i in range(C.shape[0]):
+    #     C[i][np.random.randint(0, C.shape[1])] = 1
+    # # Execute feed_forward
+    # print("loss for x: ", network.feed_forward(input_batch, C))
+    # activations = network.activations
+    # # Display the output
+    # for i, activation in enumerate(activations):
+    #     print(f"Layer {i+1} activations:\n{activation}\n")
 
-    print([w.shape for w in network.Grad_F_by_Theta(C)])
-    print([w.shape for w in network.weights])
+    # print([w.shape for w in network.Grad_F_by_Theta(C)])
+    # print([w.shape for w in network.weights])
+    network = ff_standard_neural_network(5, [20, 15], 5)
+    network.gradient_test_nn(2000)

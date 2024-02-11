@@ -118,7 +118,6 @@ def soft_max_regression_grad_by_x(X, W, C):
 def f_standart_layer(X, W):
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    # X_with_ones = np.append(X, 1)
     return activation_function(W @ X_with_ones)
 
 
@@ -130,26 +129,33 @@ def JacMV_f_by_x_transpose(X, W, V):
     return (W[:, :-1]).T @ A
 
 
-def JacMV_f_by_theta_transpose(x, W, v):
-    ones_row = np.ones((1, x.shape[1]))
-    x_with_ones = np.vstack((x, ones_row))
-    A = (activation_function_derivative(W @ x_with_ones) * v)
-    jacmv_by_W = A @ x.T
+def JacMV_f_by_theta_transpose(X, W, v):
+    ones_row = np.ones((1, X.shape[1]))
+    X_with_ones = np.vstack((X, ones_row))
+    A = (activation_function_derivative(W @ X_with_ones) * v)
+    jacmv_by_W = A @ X.T
     jacmv_by_b = np.sum(A, axis=1)
     return np.hstack((jacmv_by_W, jacmv_by_b.reshape(-1, 1)))
 
 
-def JacMV_f_by_x(x, W, v):
+def JacMV_f_by_x(x, W, v):  # only for x of shape: (d, 1)
     ones_row = np.ones((1, x.shape[1]))
     x_with_ones = np.vstack((x, ones_row))
-    # x_with_ones = np.append(x, 1)
     return np.diag(activation_function_derivative(W@x_with_ones.flatten())) @ (W[:, :-1] @ v)
 
 
-def JacMV_f_by_W(x, W, v):
+# def JacMV_f_by_W(x, W, v):
+#     ones_row = np.ones((1, x.shape[1]))
+#     x_with_ones = np.vstack((x, ones_row))
+#     return np.diag(activation_function_derivative(W @ x_with_ones.flatten())) @ (np.kron(x.T, np.eye(W.shape[0])) @ v)
+
+
+def JacMV_f_by_W(x, W, v):  # only for x of shape: (d, 1)
     ones_row = np.ones((1, x.shape[1]))
     x_with_ones = np.vstack((x, ones_row))
-    jac_by_b = np.diag(activation_function_derivative(W @ x_with_ones))
+    Z = activation_function_derivative(
+        W @ x_with_ones.flatten())
+    jac_by_b = np.diag(Z)
     jac_by_W = jac_by_b @ np.kron(x.T, np.eye(W.shape[0]))
     jac_by_theta = np.hstack((jac_by_W, jac_by_b))
     return jac_by_theta @ v
@@ -223,7 +229,11 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='W', iterations=10):
             F2 = JacMv(X, W, d)
         elif by == 'W':
             F1 = F(X, W + d)
-            F2 = JacMv(X, W, d.flatten())
+            d_w = d[:, :-1]
+            d_b = d[:, -1]
+            # reorganizing d to match the jacboian multiplication:
+            d = np.append(d_w.flatten(order='F'), d_b)
+            F2 = JacMv(X, W, d)
         # F1 - F0
         # F1 - F0 - eps * d.T Grad(x)
         y1.append(np.linalg.norm(F1 - F0))
@@ -239,6 +249,8 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='W', iterations=10):
     plt.show()
 
 
+
+
 def JacTMV_by_x_test(x_shape, W_shape, u_d, v_d):
     x = np.random.rand(x_shape[0], x_shape[1])
     W = np.random.rand(W_shape[0], W_shape[1])
@@ -247,10 +259,10 @@ def JacTMV_by_x_test(x_shape, W_shape, u_d, v_d):
     return abs(u.T @ JacMV_f_by_x(x, W, v) - v.T @ JacMV_f_by_x_transpose(x, W, u)) < MACHINE_EPS_FL32
 
 
-def JacTMV_by_W_test(x_d, W_shape, u_d, v_d):
-    x = np.random.rand(x_d)
+def JacTMV_by_W_test(x_shape, W_shape, u_d, v_d):
+    x = np.random.rand(x_shape[0], x_shape[1])
     W = np.random.rand(W_shape[0], W_shape[1])
-    u = np.random.rand(u_d)
+    u = np.random.rand(u_d, 1)
     v = np.random.rand(v_d)
     return abs(u.T @ JacMV_f_by_W(x, W, v) - v.T @ (JacMV_f_by_theta_transpose(x, W, u))) < MACHINE_EPS_FL32
 
@@ -282,10 +294,10 @@ def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, mini_batch_size=10, plo
         grad_norms_log.append(grad_norm)
         mini_batch_index = (mini_batch_index + 1) % len(x_batches)
     if plot:
+        xs = np.arange(iterations)
         plt.figure()
         plt.yscale('log')
-        plt.plot([i for i in range(len(loss_log))],
-                 loss_log)
+        plt.plot(xs, loss_log)
         plt.xlabel("iterations")
         plt.ylabel("loss function values")
         plt.title(title)
@@ -293,8 +305,7 @@ def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, mini_batch_size=10, plo
 
         plt.figure()
         plt.yscale('log')
-        plt.plot([i for i in range(len(grad_norms_log))],
-                 grad_norms_log)
+        plt.plot(xs, grad_norms_log)
         plt.xlabel("iterations")
         plt.ylabel("gradient norm values")
         plt.title(title)
@@ -332,5 +343,7 @@ if __name__ == "__main__":
     #               (30, 100), (10, 31), (10, 100), by='W')
     # JacMv_test(f_standart_layer, JacMV_f_by_x,
     #            (10, 1), (5, 11), by='X')
-    print(JacTMV_by_x_test((30, 1), (10, 31), 10, 30))
-    # print(JacTMV_by_W_test(30, (10, 31), 10, 300))
+    JacMv_test(f_standart_layer, JacMV_f_by_W,
+               (10, 1), (3, 11), by='W')
+    # print(JacTMV_by_x_test((30, 1), (10, 31), 10, 30))
+    # print(JacTMV_by_W_test((30, 1), (10, 31), 10, 310))
