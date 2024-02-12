@@ -29,7 +29,7 @@ class ff_standard_neural_network:
         self.activations = []
 
     def feed_forward(self, X, C, Ws=None):
-        if not Ws:
+        if Ws == None:
             Ws = self.weights
         self.activations = [X]
         # x is a batch of inputs
@@ -87,6 +87,7 @@ class ff_standard_neural_network:
             self.activations[-2], self.weights[-1], C)
 
         for X, weights in reversed(list(zip(self.activations[:-2], self.weights[:-1]))):
+            print(f"back_prop_grad shape: {back_prop_grad.shape}")
             grad = util.JacMV_f_by_theta_transpose(X, weights, back_prop_grad)
             grads_Ws.insert(0, grad)
             back_prop_grad = util.JacMV_f_by_x_transpose(
@@ -117,9 +118,11 @@ class ff_standard_neural_network:
             d = [epsilon * W_i for W_i in d0]
             W_plus_d = [self.weights[i] + d[i]
                         for i in range(len(self.weights))]
-            F1 = self.feed_forward(X, Ws=W_plus_d, C=C)
-            F2 = np.sum([np.dot((d[j]).flatten(), (g0[j]).flatten())
+            F1 = self.feed_forward(X, C , W_plus_d)
+            print(f"iteration {i} F1: {F1}")
+            F2 = np.sum([np.dot((g0[j]).flatten(),(d[j]).flatten())
                          for j in range(len(d))])
+            print(f"iteration {i} F2: {F2}")
             y1.append(np.abs(F1 - F0))
             y2.append(np.abs(F1 - F0 - F2))
         xs = np.arange(iterations)
@@ -166,5 +169,5 @@ if __name__ == "__main__":
     # print([w.shape for w in network.weights])
 
     # network = ff_standard_neural_network(5, [20, 15], 3)
-    network = ff_standard_neural_network(5, [], 3)
-    network.gradient_test_nn(100)
+    network = ff_standard_neural_network(5, [2, 5], 3)
+    network.gradient_test_nn(30)

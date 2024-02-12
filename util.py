@@ -118,6 +118,7 @@ def soft_max_regression_grad_by_x(X, W, C):
 def f_standart_layer(X, W):
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
+    print(W @ X_with_ones)
     return activation_function(W @ X_with_ones)
 
 
@@ -191,6 +192,7 @@ def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X', iter=20):
         # F1 - F0 - eps * d.T Grad(x)
         y1.append(np.abs(F1 - F0))
         y2.append(np.abs(F1 - F0 - F2))
+        print(f"iteration {i} F2: {F2}")
     xs = np.arange(0, iter)
     plt.plot(xs, y1, label="first order approximation")
     plt.plot(xs, y2, label="second order approxination")
@@ -223,11 +225,13 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='W', iterations=10):
             F2 = JacMv(X, W, d)
         elif by == 'W':
             F1 = F(X, W + d)
+            print("F1 shape ", F1.shape)
             d_w = d[:, :-1]
             d_b = d[:, -1]
             # reorganizing d to match the jacboian multiplication:
             d = np.append(d_w.flatten(order='F'), d_b.flatten())
-            F2 = JacMv(X, W, d)
+            F2 = JacMv(X, W, d).reshape(F1.shape)
+            print("F2 shape ", F2.shape)
         # F1 - F0
         # F1 - F0 - eps * d.T Grad(x)
         y1.append(np.linalg.norm(F1 - F0))
@@ -256,7 +260,9 @@ def JacTMV_by_W_test(x_shape, W_shape, u_d, v_d):
     W = np.random.rand(W_shape[0], W_shape[1])
     u = np.random.rand(u_d, 1)
     v = np.random.rand(v_d)
-    return abs(u.T @ JacMV_f_by_W(x, W, v) - v.T @ (JacMV_f_by_theta_transpose(x, W, u))) < MACHINE_EPS_FL32
+    uT_v = u.T @ JacMV_f_by_W(x, W, v)
+    vT_u = (v.T @ JacMV_f_by_theta_transpose(x, W, u).flatten('F'))
+    return abs(uT_v - vT_u) < MACHINE_EPS_FL32
 
 
 def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, mini_batch_size=10, plot=False, learning_rate=0.1, iterations=100, tolerance=1e-3, title="SGD minimzation"):
@@ -329,13 +335,15 @@ def test_soft_max_loss():
 
 if __name__ == "__main__":
     # test_soft_max_loss()
-    # gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
-    #               (30, 100), (10, 31), (10, 100), by='X')
-    # gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
-    #               (30, 100), (10, 31), (10, 100), by='W')
-    # JacMv_test(f_standart_layer, JacMV_f_by_x,
-    #            (10, 1), (5, 11), by='X')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
+                  (30, 100), (10, 31), (10, 100), by='X')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
+                  (30, 100), (10, 31), (10, 100), by='W')
+    JacMv_test(f_standart_layer, JacMV_f_by_x,
+               (10, 1), (5, 11), by='X')
     JacMv_test(f_standart_layer, JacMV_f_by_W,
                (10, 1), (3, 11), by='W')
-    # print(JacTMV_by_x_test((30, 1), (10, 31), 10, 30))
-    # print(JacTMV_by_W_test((30, 1), (10, 31), 10, 310))
+    print(JacTMV_by_x_test((30, 1), (10, 31), 10, 30))
+    print(JacTMV_by_W_test((30, 1), (10, 31), 10, 310))
+
+    # print(f_standart_layer(np.array([[1], [2]]), np.array([[1, 0, 1], [0, 1, 0]])))
