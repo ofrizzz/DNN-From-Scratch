@@ -144,12 +144,6 @@ def JacMV_f_by_x(x, W, v):  # only for x of shape: (d, 1)
     return np.diag(activation_function_derivative(W@x_with_ones.flatten())) @ (W[:, :-1] @ v)
 
 
-# def JacMV_f_by_W(x, W, v):
-#     ones_row = np.ones((1, x.shape[1]))
-#     x_with_ones = np.vstack((x, ones_row))
-#     return np.diag(activation_function_derivative(W @ x_with_ones.flatten())) @ (np.kron(x.T, np.eye(W.shape[0])) @ v)
-
-
 def JacMV_f_by_W(x, W, v):  # only for x of shape: (d, 1)
     ones_row = np.ones((1, x.shape[1]))
     x_with_ones = np.vstack((x, ones_row))
@@ -232,7 +226,7 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='W', iterations=10):
             d_w = d[:, :-1]
             d_b = d[:, -1]
             # reorganizing d to match the jacboian multiplication:
-            d = np.append(d_w.flatten(order='F'), d_b)
+            d = np.append(d_w.flatten(order='F'), d_b.flatten())
             F2 = JacMv(X, W, d)
         # F1 - F0
         # F1 - F0 - eps * d.T Grad(x)
@@ -247,8 +241,6 @@ def JacMv_test(F, JacMv, X_shape, W_shape, by='W', iterations=10):
     plt.title('JacMv test by: ' + by)
     plt.legend()
     plt.show()
-
-
 
 
 def JacTMV_by_x_test(x_shape, W_shape, u_d, v_d):

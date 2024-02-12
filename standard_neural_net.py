@@ -16,11 +16,14 @@ class ff_standard_neural_network:
         self.hidden_layers_dimensions = hidden_layers_dimensions
         self.output_layer_dimension = output_layer_dimension
         self.num_of_layers = len(hidden_layers_dimensions) + 2
-
-        self.weights = [np.random.rand(hidden_layers_dimensions[0], input_dimension + 1)] + \
-            [np.random.rand(hidden_layers_dimensions[i], hidden_layers_dimensions[i-1] + 1) for i in range(1, len(hidden_layers_dimensions))] + \
-            [np.random.rand(output_layer_dimension,
-                            hidden_layers_dimensions[-1] + 1)]
+        if len(hidden_layers_dimensions) > 0:
+            self.weights = [np.random.rand(hidden_layers_dimensions[0], input_dimension + 1)] + \
+                [np.random.rand(hidden_layers_dimensions[i], hidden_layers_dimensions[i-1] + 1) for i in range(1, len(hidden_layers_dimensions))] + \
+                [np.random.rand(output_layer_dimension,
+                                hidden_layers_dimensions[-1] + 1)]
+        else:
+            self.weights = [np.random.rand(
+                output_layer_dimension, input_dimension + 1)]
 
         # self.derivatives = [np.zeros((hidden_layers_dimensions[i], hidden_layers_dimensions[i-1] + 1)) for i in range(self.num_of_layers-1)]
         self.activations = []
@@ -93,7 +96,8 @@ class ff_standard_neural_network:
 
     def gradient_test_nn(self, m, iterations=20):
         X_d = self.input_dimension
-        C_shape = (X_d, m)
+        C_d = self.output_layer_dimension
+        C_shape = (C_d, m)
         X = np.random.rand(X_d, m)
         C = np.zeros(C_shape)
         for i in range(C_shape[1]):
@@ -102,6 +106,10 @@ class ff_standard_neural_network:
         eps0 = 0.5
         F0 = self.feed_forward(X, C)
         g0 = self.Grad_F_by_Theta(C)
+        for i, W in enumerate(self.weights):
+            print(f"W in layer {i} is of shape: {W.shape}")
+        for i, W in enumerate(g0):
+            print(f"W grad in layer {i} is of shape: {W.shape}")
         y1 = []
         y2 = []
         for i in range(iterations):
@@ -156,5 +164,7 @@ if __name__ == "__main__":
 
     # print([w.shape for w in network.Grad_F_by_Theta(C)])
     # print([w.shape for w in network.weights])
-    network = ff_standard_neural_network(5, [20, 15], 5)
-    network.gradient_test_nn(2000)
+
+    # network = ff_standard_neural_network(5, [20, 15], 3)
+    network = ff_standard_neural_network(5, [], 3)
+    network.gradient_test_nn(100)
