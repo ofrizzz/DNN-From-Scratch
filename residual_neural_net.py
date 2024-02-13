@@ -3,9 +3,10 @@ import scipy.io as sp
 import pandas as pd
 import matplotlib.pyplot as plt
 import util
+import resNet_util
 
 activation_function = np.tanh
-output_layer_function = util.soft_max_loss
+output_layer_function = resNet_util.soft_max_loss
 
 
 class ff_residual_neural_network:
@@ -43,7 +44,7 @@ class ff_residual_neural_network:
             x = x + \
                 self.W2s[i] @ activation_function(self.W1s[i] @ x + self.bs[i])
 
-        return output_layer_function(self.output_layer_W @ x + self.output_layer_b, y)
+        return output_layer_function(x, self.output_layer_W, self.output_layer_b, y)
 
     # TODO:
 

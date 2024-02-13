@@ -10,6 +10,37 @@ output_layer_function = util.soft_max_loss
 activation_function_derivative = util.tanh_derivative
 
 
+def soft_max_loss(x, W, b, y):
+    logits = (W @ x + b).T
+    softmax_probs = util.stable_softmax(logits)
+    log_probs = np.log(softmax_probs)
+    return np.sum(y.T * log_probs)
+
+
+def soft_max_regression_grad_by_W(x, W, b, y):
+    Z = (W @ x + b).T
+    softmax = util.stable_softmax(Z)
+    dL_dZ = (softmax - y.T)
+    grad = (x @ dL_dZ).T
+    return grad
+
+
+def soft_max_regression_grad_by_b(x, W, b, y):
+    Z = (W @ x + b).T
+    softmax = util.stable_softmax(Z)
+    dL_dZ = (softmax - y.T)
+    grad_by_b = np.sum(dL_dZ.T, axis=1)
+    return grad_by_b
+
+
+def soft_max_regression_grad_by_x(x, W, b, y):
+    Z = x @ W.T + b
+    softmax = util.stable_softmax(Z)
+    dL_dZ = (softmax - y.T)
+    dL_dX = W.T @ dL_dZ.T
+    return dL_dX
+
+
 def f_resnet_layer(x, W1, W2, b):
     z1 = W1 @ x + b
     a1 = activation_function(z1)
