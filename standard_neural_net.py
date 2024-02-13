@@ -2,10 +2,19 @@ import numpy as np
 import scipy.io as sp
 import matplotlib.pyplot as plt
 import util
+import data_utils as du
 
+# for graient test use:
+
+# activation_function = np.tanh
+# activation_function_derivative = util.tanh_derivative
+
+# for actual usecase use:
 activation_function = util.relu
-output_layer_function = util.soft_max_loss
 activation_function_derivative = util.relu_derivative
+
+
+output_layer_function = util.soft_max_loss
 loss_function_grad_theta = util.soft_max_regression_grad_by_theta
 loss_function_grad_x = util.soft_max_regression_grad_by_x
 
@@ -37,7 +46,6 @@ class ff_standard_neural_network:
         for layer in range(self.num_of_layers - 1):
             ones_row = np.ones((1, X.shape[1]))
             X_with_ones = np.vstack((X, ones_row))
-            # X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
             if layer < self.num_of_layers - 2:
                 X = Ws[layer] @ X_with_ones
                 X = activation_function(X)
@@ -47,37 +55,20 @@ class ff_standard_neural_network:
         # activations[i] is the output of layer i
         return X
 
-    def fit(self, x_train, y_train, epochs=10, mini_batch_size=10):
+    def fit(self, x_train, y_train, x_test, c_test, learning_rate=0.1, epochs=10, mini_batch_size=10):
 
-        x_batches, y_batches = util.split_into_batches(
+        x_batches, y_batches = util.split_into_batches_T(
             x_train, y_train, mini_batch_size)
 
         for i in range(epochs):
-
+            print(
+                f"staring epoch {i} with success rate of {self.compute_success_precent(x_test, c_test) * 100}%")
             for x_batch, y_batch in zip(x_batches, y_batches):
-                outputs = self.feed_forward(x_batch)  # add C to feed_forward
-                # compute loss
-                # compute gradients (backpropagation)
-                # update weights
-                pass
-
-    # def Jac_f_by_x(W, z, vec):
-    #     diag = activation_function_derivative(z)
-    #     jac = diag[:, np.newaxis] * W
-    #     return jac.T @ vec
-
-    # def Jac_f_by_theta(n1, n2, x, z, activation_function_derivative, vec):
-    #     grad_theta = np.array([])
-    #     for i in range(n1):
-    #         for j in range(n2):
-    #             row = np.zeros((1, n2))
-    #             row[i] = activation_function_derivative(z[j]) * x[i]
-    #             np.concatenate(grad_theta, np.array([np.dot(row, vec)]))
-    #     for i in range(n2):
-    #         row = np.zeros((1, n2))
-    #         row[i] = activation_function_derivative(z[j])
-    #         np.concatenate(grad_theta, np.array([np.dot(row, vec)]))
-    #     return grad_theta
+                loss = self.feed_forward(x_batch, y_batch)
+                grad = self.Grad_F_by_Theta(y_batch)
+                self.weights = [self.weights[j] - learning_rate * grad[j]
+                                for j in range(len(grad))]
+            print(f"finished epoch {i} with loss = {loss}")
 
     def Grad_F_by_Theta(self, C):
         grad = np.array(loss_function_grad_theta(
@@ -87,7 +78,6 @@ class ff_standard_neural_network:
             self.activations[-2], self.weights[-1], C)
 
         for X, weights in reversed(list(zip(self.activations[:-2], self.weights[:-1]))):
-            print(f"back_prop_grad shape: {back_prop_grad.shape}")
             grad = util.JacMV_f_by_theta_transpose(X, weights, back_prop_grad)
             grads_Ws.insert(0, grad)
             back_prop_grad = util.JacMV_f_by_x_transpose(
@@ -118,9 +108,9 @@ class ff_standard_neural_network:
             d = [epsilon * W_i for W_i in d0]
             W_plus_d = [self.weights[i] + d[i]
                         for i in range(len(self.weights))]
-            F1 = self.feed_forward(X, C , W_plus_d)
+            F1 = self.feed_forward(X, C, W_plus_d)
             print(f"iteration {i} F1: {F1}")
-            F2 = np.sum([np.dot((g0[j]).flatten(),(d[j]).flatten())
+            F2 = np.sum([np.dot((g0[j]).flatten(), (d[j]).flatten())
                          for j in range(len(d))])
             print(f"iteration {i} F2: {F2}")
             y1.append(np.abs(F1 - F0))
@@ -135,39 +125,30 @@ class ff_standard_neural_network:
         plt.legend()
         plt.show()
 
-    # Sample test input to initialize ff_standard_neural_network class
+    def compute_success_precent(self, x_test, c_test):
+        X = x_test
+        Ws = self.weights
+        for i in range(len(Ws)-1):
+            ones_row = np.ones((1, X.shape[1]))
+            X_with_ones = np.vstack((X, ones_row))
+            X = util.activation_function(Ws[i] @ X_with_ones)
+        ones_row = np.ones((1, X.shape[1]))
+        X_with_ones = np.vstack((X, ones_row))
+        logits = util.stable_softmax(Ws[-1] @ X_with_ones)
+        pred_test = np.argmax(logits, axis=0)
+        correct_predictions_test = np.sum(
+            pred_test == np.argmax(c_test, axis=0))
+        succ_rate_test = correct_predictions_test / c_test.shape[1]
+        return succ_rate_test
 
 
 if __name__ == "__main__":
-    # input_dimension = 5  # For example, a neural network with 5 input features
-    # # Two hidden layers, first with 4 neurons and second with 3 neurons
-    # hidden_layers_dimensions = [4, 3]
-    # # Assuming a binary classification task, so 2 output neurons
-    # output_layer_dimension = 2
-
-    # # Initialize the ff_standard_neural_network instance
-    # network = ff_standard_neural_network(
-    #     input_dimension, hidden_layers_dimensions, output_layer_dimension)
-    # # print([network.weights[i].shape for i in range(len(network.weights))])
-
-    # network = ff_standard_neural_network(3, [2], 3)
-
-    # # Test input: batch of 2 vectors, each with 3 features
-    # input_batch = np.array([[0.5, -0.5],  [0.3, 0.5], [-0.5,  0.3]])
-    # print(input_batch.shape)
-    # C = np.zeros((3, 2))
-    # for i in range(C.shape[0]):
-    #     C[i][np.random.randint(0, C.shape[1])] = 1
-    # # Execute feed_forward
-    # print("loss for x: ", network.feed_forward(input_batch, C))
-    # activations = network.activations
-    # # Display the output
-    # for i, activation in enumerate(activations):
-    #     print(f"Layer {i+1} activations:\n{activation}\n")
-
-    # print([w.shape for w in network.Grad_F_by_Theta(C)])
-    # print([w.shape for w in network.weights])
 
     # network = ff_standard_neural_network(5, [20, 15], 3)
-    network = ff_standard_neural_network(5, [2, 5], 3)
-    network.gradient_test_nn(30)
+    x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
+        "datasets\\GMMData.mat")
+    network = ff_standard_neural_network(5, [6, 6], 5)
+    network.fit(x_train, c_train, x_test, c_test,
+                epochs=50, learning_rate=0.05)
+    # print(network.compute_success_precent(x_test, c_test))
+    # network.gradient_test_nn(30)
