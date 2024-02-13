@@ -146,9 +146,9 @@ if __name__ == "__main__":
 
     # network = ff_standard_neural_network(5, [20, 15], 3)
     x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
-        "datasets\\GMMData.mat")
-    network = ff_standard_neural_network(5, [6, 6], 5)
+        "datasets\\SwissRollData.mat")
+    network = ff_standard_neural_network(2, [6, 6], 2)
     network.fit(x_train, c_train, x_test, c_test,
-                epochs=50, learning_rate=0.05)
+                epochs=50, learning_rate=1)
     # print(network.compute_success_precent(x_test, c_test))
     # network.gradient_test_nn(30)
