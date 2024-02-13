@@ -16,6 +16,13 @@ def soft_max_loss(x, W, b, y):
     log_probs = np.log(softmax_probs)
     return np.sum(y.T * log_probs)
 
+def soft_max_regression_grad_by_b(x, W, b, y):
+    Z = (W @ x + b).T
+    softmax = util.stable_softmax(Z)
+    dL_dZ = (softmax - y.T)
+    grad = np.sum(dL_dZ, axis=1).reshape(-1, 1)
+    return grad
+
 
 def soft_max_regression_grad_by_W(x, W, b, y):
     Z = (W @ x + b).T
@@ -25,16 +32,10 @@ def soft_max_regression_grad_by_W(x, W, b, y):
     return grad
 
 
-def soft_max_regression_grad_by_b(x, W, b, y):
-    Z = (W @ x + b).T
-    softmax = util.stable_softmax(Z)
-    dL_dZ = (softmax - y.T)
-    grad_by_b = np.sum(dL_dZ.T, axis=1)
-    return grad_by_b
 
 
 def soft_max_regression_grad_by_x(x, W, b, y):
-    Z = x @ W.T + b
+    Z = (W @ x + b).T
     softmax = util.stable_softmax(Z)
     dL_dZ = (softmax - y.T)
     dL_dX = W.T @ dL_dZ.T
@@ -67,7 +68,53 @@ def Jac_f_by_x(x, W1, W2, b):
     return np.eye(x.shape[0]) + W2 @ np.diag(activation_function_derivative(W1 @ x + b).flatten()) @ W1
 
 # W1 = n2xn1, W2= n1xn2
+def gradient_test(F, grad_F, W_shape, by='x', iter=20):
+    W_nlabels, W_d = W_shape
+    x = np.random.rand(W_d, 1)
 
+    y = np.zeros((W_nlabels, 1))
+    y[np.random.randint(0, W_nlabels)][0] = 1
+
+    W = np.random.rand(W_nlabels, W_d)
+    b = np.random.rand(W_nlabels, 1)
+
+    if by == 'x':
+        d0 = np.random.rand(W_d, 1)
+    elif by == 'W':
+        d0 = np.random.rand(W_nlabels, W_d)
+    elif by == 'b':
+        d0 = np.random.rand(W_nlabels, 1)
+    
+    eps0 = 0.5
+    F0 = F(x, W, b, y)
+    g0 = grad_F(x, W, b, y)
+    y1 = []
+    y2 = []
+    for i in range(iter):
+        epsilon = eps0 ** i
+        d = epsilon * d0
+        if by == 'x':
+            F1 = F(x + d, W, b, y)
+        elif by == 'W':
+            F1 = F(x, W + d, b, y)
+        elif by == 'b':
+            F1 = F(x, W, b + d, y)
+
+        F2 = np.dot(d.flatten(), g0.flatten())
+        # F1 - F0
+        # F1 - F0 - eps * d.T Grad(x)
+        y1.append(np.abs(F1 - F0))
+        y2.append(np.abs(F1 - F0 - F2))
+
+    xs = np.arange(0, iter)
+    plt.plot(xs, y1, label="first order approximation")
+    plt.plot(xs, y2, label="second order approxination")
+    plt.yscale('log')
+    plt.xlabel('iterations')
+    plt.ylabel('approximation')
+    plt.title('gradient test by: ' + by)
+    plt.legend()
+    plt.show()
 
 def JacMv_test(F, Jac, W2_shape, by='W1', iterations=10):
 
@@ -119,13 +166,19 @@ def JacMv_test(F, Jac, W2_shape, by='W1', iterations=10):
     plt.legend()
     plt.show()
 
+if __name__ == "__main__":
+    # JacMv_test(f_resnet_layer, Jac_f_by_x,
+    #            (5, 11), by='x')
+    # JacMv_test(f_resnet_layer, Jac_f_by_b,
+    #            (5, 11), by='b')
+    # JacMv_test(f_resnet_layer, Jac_f_by_W1,
+    #            (5, 11), by='W1')
 
-# JacMv_test(f_resnet_layer, Jac_f_by_x,
-#            (5, 11), by='x')
-# JacMv_test(f_resnet_layer, Jac_f_by_b,
-#            (5, 11), by='b')
-# JacMv_test(f_resnet_layer, Jac_f_by_W1,
-#            (5, 11), by='W1')
 
-JacMv_test(f_resnet_layer, Jac_f_by_W2,
-           (5, 11), by='W2')
+    JacMv_test(f_resnet_layer, Jac_f_by_W2,
+            (5, 11), by='W2')
+
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_x, (5, 11), by='x')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_W, (5, 11), by='W')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_b, (5, 11), by='b')
+
