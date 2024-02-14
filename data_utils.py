@@ -16,6 +16,9 @@ def load_matlab_data_np_arrays(mat_file_path):
     c_test = data_object["Cv"]
     return x_train, c_train, x_test, c_test
 
+def split_into_batches(data, batch_size):
+    return [data[k:k+batch_size] for k in range(0, data.shape[1], batch_size)]
+
 
 def read_iris_dataset():
     iris_df = pd.read_csv("datasets//IRIS.csv")
@@ -26,7 +29,7 @@ def read_iris_dataset():
     return labeld_data
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    print(x_train.shape)
-    print(c_train.shape)
+    # print(x_train.shape)
+    # print(c_train.shape)

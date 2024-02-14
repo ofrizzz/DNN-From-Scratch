@@ -18,19 +18,20 @@ def tanh_derivative(z):
     return 1 - np.tanh(z)**2
 
 
-def split_into_batches(x_train, y_train, batch_size):
-    x_batches = [x_train[i:i + batch_size]
-                 for i in range(0, len(x_train), batch_size)]
-    y_batches = [y_train[i:i + batch_size]
-                 for i in range(0, len(y_train), batch_size)]
-    return x_batches, y_batches
+# def split_into_batches(x_train, y_train, batch_size):
+#     x_batches = [x_train[i:i + batch_size]
+#                  for i in range(0, len(x_train), batch_size)]
+#     y_batches = [y_train[i:i + batch_size]
+#                  for i in range(0, len(y_train), batch_size)]
+#     print("batch len: ", len(x_batches), len(y_batches))
+#     return x_batches, y_batches
 
 
 def split_into_batches_T(x_train, y_train, batch_size):
     x_batches = [x_train[:, i:i + batch_size]
-                 for i in range(0, len(x_train), batch_size)]
+                 for i in range(0, x_train.shape[1], batch_size)]
     y_batches = [y_train[:, i:i + batch_size]
-                 for i in range(0, len(y_train), batch_size)]
+                 for i in range(0, y_train.shape[1], batch_size)]
     return x_batches, y_batches
 
 
@@ -61,17 +62,15 @@ def stable_softmax(Z):
 def soft_max_loss(X, W, C):
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    print("X_with_ones shape: ", X_with_ones.shape)
-    print("W shape: ", W.shape)
     logits = (W @ X_with_ones).T
     softmax_probs = stable_softmax(logits)
     log_probs = np.log(softmax_probs)
     return -np.mean(np.sum(C.T * log_probs, axis=1))
 
 
-activation_function = np.tanh
+activation_function = relu
 output_layer_function = soft_max_loss
-activation_function_derivative = tanh_derivative
+activation_function_derivative = relu_derivative
 
 # def soft_max_loss(X, W, C):
 #     logits = W @ X
@@ -121,7 +120,6 @@ def soft_max_regression_grad_by_x(X, W, C):
 def f_standart_layer(X, W):
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    print(W @ X_with_ones)
     return activation_function(W @ X_with_ones)
 
 

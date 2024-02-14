@@ -34,41 +34,58 @@ class ff_standard_neural_network:
             self.weights = [np.random.rand(
                 output_layer_dimension, input_dimension + 1)]
 
-        # self.derivatives = [np.zeros((hidden_layers_dimensions[i], hidden_layers_dimensions[i-1] + 1)) for i in range(self.num_of_layers-1)]
         self.activations = []
+
 
     def feed_forward(self, X, C, Ws=None):
         if Ws == None:
             Ws = self.weights
         self.activations = [X]
-        # x is a batch of inputs
-        # concatenate 1 at the bottom of x for bias
-        for layer in range(self.num_of_layers - 1):
+        for layer in range(self.num_of_layers - 1): # TODO:figure out why -1?
             ones_row = np.ones((1, X.shape[1]))
             X_with_ones = np.vstack((X, ones_row))
+
             if layer < self.num_of_layers - 2:
                 X = Ws[layer] @ X_with_ones
                 X = activation_function(X)
             else:
                 X = output_layer_function(X, Ws[-1], C)
             self.activations.append(X)
-        # activations[i] is the output of layer i
         return X
+        
+    # def feed_forward(self, X, C, Ws=None):
+    #     if Ws == None:
+    #         Ws = self.weights
+    #     self.activations = [X]
+    #     for layer in range(self.num_of_layers):
+    #         ones_row = np.ones((1, X.shape[1]))
+    #         X_with_ones = np.vstack((X, ones_row))
+    #         if layer == self.num_of_layers - 1:
+    #             X = output_layer_function(X, Ws[-1], C)
+
 
     def fit(self, x_train, y_train, x_test, c_test, learning_rate=0.1, epochs=10, mini_batch_size=10):
 
         x_batches, y_batches = util.split_into_batches_T(
             x_train, y_train, mini_batch_size)
+        
+        print(f"x_test, c_test: {x_test.shape, c_test.shape}")
 
         for i in range(epochs):
+            # print(
+            #     f"staring epoch {i} with success rate of {self.compute_success_precent(x_test, c_test) * 100}%")
             print(
                 f"staring epoch {i} with success rate of {self.compute_success_precent(x_test, c_test) * 100}%")
+            
             for x_batch, y_batch in zip(x_batches, y_batches):
                 loss = self.feed_forward(x_batch, y_batch)
                 grad = self.Grad_F_by_Theta(y_batch)
+
                 self.weights = [self.weights[j] - learning_rate * grad[j]
                                 for j in range(len(grad))]
+                
             print(f"finished epoch {i} with loss = {loss}")
+
 
     def Grad_F_by_Theta(self, C):
         grad = np.array(loss_function_grad_theta(
@@ -82,8 +99,8 @@ class ff_standard_neural_network:
             grads_Ws.insert(0, grad)
             back_prop_grad = util.JacMV_f_by_x_transpose(
                 X, weights, back_prop_grad)
-
         return grads_Ws
+
 
     def gradient_test_nn(self, m, iterations=20):
         X_d = self.input_dimension
@@ -125,30 +142,48 @@ class ff_standard_neural_network:
         plt.legend()
         plt.show()
 
-    def compute_success_precent(self, x_test, c_test):
-        X = x_test
-        Ws = self.weights
-        for i in range(len(Ws)-1):
-            ones_row = np.ones((1, X.shape[1]))
-            X_with_ones = np.vstack((X, ones_row))
-            X = util.activation_function(Ws[i] @ X_with_ones)
+
+    def compute_success_precent(self,X_test, C_test):
+        self.feed_forward(X_test, C_test)
+        X = self.activations[-2]
         ones_row = np.ones((1, X.shape[1]))
         X_with_ones = np.vstack((X, ones_row))
-        logits = util.stable_softmax(Ws[-1] @ X_with_ones)
-        pred_test = np.argmax(logits, axis=0)
-        correct_predictions_test = np.sum(
-            pred_test == np.argmax(c_test, axis=0))
-        succ_rate_test = correct_predictions_test / c_test.shape[1]
-        return succ_rate_test
+        logits = util.stable_softmax(self.weights[-1] @ X_with_ones)
+        pred = np.argmax(logits, axis=0)
+        correct_predictions = np.sum(pred == np.argmax(C_test, axis=0))
+        succ_rate = correct_predictions / C_test.shape[1]
+        return succ_rate
+        
+
+
+    # def compute_success_precent(self, x_test, c_test):
+    #     X = x_test
+    #     Ws = self.weights
+    #     for i in range(len(Ws)-1):
+
+    #         ones_row = np.ones((1, X.shape[1]))
+    #         X_with_ones = np.vstack((X, ones_row))
+    #         X = util.activation_function(Ws[i] @ X_with_ones)
+
+    #     ones_row = np.ones((1, X.shape[1]))
+    #     X_with_ones = np.vstack((X, ones_row))
+    #     logits = util.stable_softmax(Ws[-1] @ X_with_ones)
+    #     pred_test = np.argmax(logits, axis=0)
+    #     correct_predictions_test = np.sum(
+    #         pred_test == np.argmax(c_test, axis=0))
+    #     succ_rate_test = correct_predictions_test / c_test.shape[1]
+    #     return succ_rate_test
 
 
 if __name__ == "__main__":
 
     # network = ff_standard_neural_network(5, [20, 15], 3)
     x_train, c_train, x_test, c_test = du.load_matlab_data_np_arrays(
-        "datasets\\SwissRollData.mat")
-    network = ff_standard_neural_network(2, [6, 6], 2)
-    network.fit(x_train, c_train, x_test, c_test,
-                epochs=50, learning_rate=1)
+        "datasets\\GMMData.mat")
+
+    
+    network = ff_standard_neural_network(5, [256], 5)
+    network.fit(x_train, c_train, x_test, c_test, mini_batch_size=64,
+                epochs=1000, learning_rate=0.001)
     # print(network.compute_success_precent(x_test, c_test))
     # network.gradient_test_nn(30)
