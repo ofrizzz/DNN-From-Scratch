@@ -14,6 +14,7 @@ def soft_max_loss(x, W, b, y):
     W_with_b = np.hstack((W, b))
     return util.soft_max_loss(x, W_with_b, y)
 
+
 def soft_max_regression_grad_by_b(x, W, b, y):
     Z = (W @ x + b).T
     softmax = util.stable_softmax(Z)
@@ -34,7 +35,6 @@ def soft_max_regression_grad_by_x(x, W, b, y):
     return util.soft_max_regression_grad_by_x(x, W_with_b, y)
 
 
-
 def f_resnet_layer(x, W1, W2, b):
     z1 = W1 @ x + b
     a1 = activation_function(z1)
@@ -50,7 +50,8 @@ def Jac_f_by_b(x, W1, W2, b):
 
 def Jac_f_by_W1(x, W1, W2, b):
     z1 = W1 @ x + b
-    Jac = W2 @ np.diag(activation_function_derivative(z1).flatten()) @ np.kron(x.T, np.eye(W1.shape[0]))
+    Jac = W2 @ np.diag(activation_function_derivative(z1).flatten()
+                       ) @ np.kron(x.T, np.eye(W1.shape[0]))
     return Jac
 
 
@@ -62,7 +63,8 @@ def Jac_f_by_W2(x, W1, W2, b):
 
 
 def Jac_f_by_x(x, W1, W2, b):
-    Jac = np.eye(x.shape[0]) + W2 @ np.diag(activation_function_derivative(W1 @ x + b).flatten()) @ W1
+    Jac = np.eye(
+        x.shape[0]) + W2 @ np.diag(activation_function_derivative(W1 @ x + b).flatten()) @ W1
     return Jac
 
 
@@ -82,7 +84,7 @@ def gradient_test(F, grad_F, W_shape, by='x', iter=20):
         d0 = np.random.rand(W_nlabels, W_d)
     elif by == 'b':
         d0 = np.random.rand(W_nlabels, 1)
-    
+
     eps0 = 0.5
     F0 = F(x, W, b, y)
     g0 = grad_F(x, W, b, y)
@@ -113,6 +115,7 @@ def gradient_test(F, grad_F, W_shape, by='x', iter=20):
     plt.title('ResNet gradient test by: ' + by)
     plt.legend()
     plt.show()
+
 
 def JacMv_test(F, Jac, W2_shape, by='W1', iterations=10):
 
@@ -147,7 +150,6 @@ def JacMv_test(F, Jac, W2_shape, by='W1', iterations=10):
         elif by == 'W1':
             F1 = F(x, W1 + d, W2, b)
         elif by == 'W2':
-            # TODO => test by W2 doesn't work
             F1 = F(x, W1, W2 + d, b)
             F2 = (Jac(x, W1, W2, b) @ d.flatten('F')).reshape(F1.shape)
 
@@ -164,6 +166,7 @@ def JacMv_test(F, Jac, W2_shape, by='W1', iterations=10):
     plt.legend()
     plt.show()
 
+
 if __name__ == "__main__":
     JacMv_test(f_resnet_layer, Jac_f_by_x,
                (5, 11), by='x')
@@ -172,11 +175,12 @@ if __name__ == "__main__":
     JacMv_test(f_resnet_layer, Jac_f_by_W1,
                (5, 11), by='W1')
 
-
     JacMv_test(f_resnet_layer, Jac_f_by_W2,
-            (5, 11),iterations=20, by='W2')
+               (5, 11), iterations=20, by='W2')
 
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_x, (5, 11), by='x')
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_W, (5, 11), by='W')
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_b, (5, 11), by='b')
-
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
+                  (5, 11), by='x')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_W,
+                  (5, 11), by='W')
+    gradient_test(soft_max_loss, soft_max_regression_grad_by_b,
+                  (5, 11), by='b')

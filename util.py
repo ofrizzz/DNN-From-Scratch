@@ -18,13 +18,13 @@ def tanh_derivative(z):
     return 1 - np.tanh(z)**2
 
 
-# def split_into_batches(x_train, y_train, batch_size):
-#     x_batches = [x_train[i:i + batch_size]
-#                  for i in range(0, len(x_train), batch_size)]
-#     y_batches = [y_train[i:i + batch_size]
-#                  for i in range(0, len(y_train), batch_size)]
-#     print("batch len: ", len(x_batches), len(y_batches))
-#     return x_batches, y_batches
+def split_into_batches(x_train, y_train, batch_size):
+    x_batches = [x_train[i:i + batch_size]
+                 for i in range(0, len(x_train), batch_size)]
+    y_batches = [y_train[i:i + batch_size]
+                 for i in range(0, len(y_train), batch_size)]
+    print("batch len: ", len(x_batches), len(y_batches))
+    return x_batches, y_batches
 
 
 def split_into_batches_T(x_train, y_train, batch_size):
@@ -68,15 +68,9 @@ def soft_max_loss(X, W, C):
     return -np.mean(np.sum(C.T * log_probs, axis=1))
 
 
-activation_function = relu
+activation_function = np.tanh
 output_layer_function = soft_max_loss
-activation_function_derivative = relu_derivative
-
-# def soft_max_loss(X, W, C):
-#     logits = W @ X
-#     softmax_probs = stable_softmax(logits)
-#     log_probs = np.log(softmax_probs)
-#     return -np.mean(np.sum(C * log_probs, axis=1))
+activation_function_derivative = tanh_derivative
 
 
 # Softmax Gradient with respect to W (Theta)
@@ -94,22 +88,11 @@ def soft_max_regression_grad_by_theta(X, W, C):
     return grad_by_theta
 
 
-# def soft_max_regression_grad_by_theta(X, W, C):
-#     m = X.shape[1]
-#     Z = W @ X  # Compute logits
-#     softmax = stable_softmax(Z)
-#     dL_dZ = (softmax - C)
-#     grad = X @ dL_dZ.T
-#     return grad / m
-
-# Softmax Gradient with respect to X
-
-
 def soft_max_regression_grad_by_x(X, W, C):
     m = X.shape[1]
     ones_row = np.ones((1, X.shape[1]))
     X_with_ones = np.vstack((X, ones_row))
-    
+
     Z = (W @ X_with_ones).T
     softmax = stable_softmax(Z)
     dL_dZ = (softmax - C.T) / m
@@ -155,13 +138,6 @@ def JacMV_f_by_W(x, W, v):  # only for x of shape: (d, 1)
     jac_by_W = jac_by_b @ np.kron(x.T, np.eye(W.shape[0]))
     jac_by_theta = np.hstack((jac_by_W, jac_by_b))
     return jac_by_theta @ v
-
-
-# def JacMV_f_by_theta_transpose(X, W, V):
-#     # X = np.concatenate([X, np.ones((1, X.shape[1]))], axis=0)
-#     Z = activation_function_derivative(W @ X)
-#     A = (Z * V)
-#     return np.outer(A, X)
 
 
 def gradient_test(F, grad_F, X_shape, W_shape, C_shape, by='X', iter=20):
@@ -312,39 +288,17 @@ def SGD_minimizer(loss, loss_grad, x0, x_train, y_train, mini_batch_size=10, plo
     return x
 
 
-def test_soft_max_loss():
-    # Test data
-    X = np.array([[1, 2], [1, 4], [1, 6]])  # Add a bias term if necessary
-    W = np.array([[0.5, -0.5], [-0.5, 0.5]])
-    C = np.array([[1, 0], [0, 1], [1, 0]])  # Assuming two classes
-
-    # Expected loss calculation
-    # This is a simplified example. In practice, you would compute this
-    # based on the softmax formula and the specific values of X, W, and C.
-    expected_loss = 0.5  # This value should be calculated based on your test data
-
-    # Calculate loss using your function
-
-    calculated_loss = soft_max_loss(X, W, C)
-    print(calculated_loss)
-
-    # Assert that the calculated loss is close to the expected loss
-    np.testing.assert_almost_equal(calculated_loss, expected_loss, decimal=5)
-
-# Run the test
-
-
 if __name__ == "__main__":
     # test_soft_max_loss()
-    gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
-                  (30, 1), (10, 31), (10, 1), by='X')
+    # gradient_test(soft_max_loss, soft_max_regression_grad_by_x,
+    #               (30, 1), (10, 31), (10, 1), by='X')
     # gradient_test(soft_max_loss, soft_max_regression_grad_by_theta,
     #               (30, 100), (10, 31), (10, 100), by='W')
     # JacMv_test(f_standart_layer, JacMV_f_by_x,
     #            (10, 1), (5, 11), by='X')
-    # JacMv_test(f_standart_layer, JacMV_f_by_W,
-    #            (10, 1), (3, 11), by='W')
+    JacMv_test(f_standart_layer, JacMV_f_by_W,
+               (10, 1), (3, 11), by='W')
     # print(JacTMV_by_x_test((30, 1), (10, 31), 10, 30))
-    # print(JacTMV_by_W_test((30, 1), (10, 31), 10, 310))
+    print(JacTMV_by_W_test((30, 1), (10, 31), 10, 310))
 
     # print(f_standart_layer(np.array([[1], [2]]), np.array([[1, 0, 1], [0, 1, 0]])))
