@@ -13,7 +13,8 @@ There are 3 datasets provided:
 
 1. A two dimensional data “SwissRoll” with two classes (colored red and blue).
 
-![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/c542c371-595d-41af-b7c8-72f738041bda)
+![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/99e447fd-1832-456e-adb6-8eec344fd30d)
+
 
 2. A two dimensional data “Peaks” with 5 classes (five colors).
 
@@ -29,7 +30,9 @@ figure below has n = 3, but in the actual data n = 5.
 The results we obtained from running the implemented models can be found in the "plots" directory.
 
 
-Contributors
-[Your Name](link to your GitHub profile)
-Acknowledgements
+## Contributors
+Daniel Elianov https://github.com/daniel-elianov
+Ofri Tirosh https://github.com/ofrizzz
+
+### Acknowledgements
 We would like to acknowledge the guidance and support provided by the instructors and teaching assistants of the Deep Learning course at BGU.
