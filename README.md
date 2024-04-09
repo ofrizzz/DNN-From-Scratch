@@ -13,17 +13,20 @@ There are 3 datasets provided:
 
 1. A two dimensional data “SwissRoll” with two classes (colored red and blue).
 
-![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/99e447fd-1832-456e-adb6-8eec344fd30d)
+![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/9a8bc3c0-759d-4e44-bfd9-9e1f7aed59da)
+
 
 
 2. A two dimensional data “Peaks” with 5 classes (five colors).
 
-![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/8f648f77-6d56-411d-ac5b-8b2d0757861b)
+![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/b249d48f-1107-4ade-93fa-55e97e9e7aba)
+
 
 3. A five dimensional data “GMM” data with 5 classes (five colors). For illustration, the
 figure below has n = 3, but in the actual data n = 5.
 
-![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/4ead133f-0de5-4ba8-975b-c12d4c7511d0)
+![image](https://github.com/ofrizzz/DNN-From-Scratch/assets/117899740/df2bdf1f-68b2-4569-9380-6972fd21a7f9)
+
 
 
 ## Results
@@ -31,8 +34,7 @@ The results we obtained from running the implemented models can be found in the 
 
 
 ## Contributors
-Daniel Elianov https://github.com/daniel-elianov
-Ofri Tirosh https://github.com/ofrizzz
+Daniel Elianov https://github.com/daniel-elianov, Ofri Tirosh https://github.com/ofrizzz
 
 ### Acknowledgements
 We would like to acknowledge the guidance and support provided by the instructors and teaching assistants of the Deep Learning course at BGU.
